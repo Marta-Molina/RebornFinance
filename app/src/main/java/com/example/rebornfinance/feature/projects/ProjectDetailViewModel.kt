@@ -1,0 +1,132 @@
+package com.example.rebornfinance.feature.projects
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.rebornfinance.core.date.DateUtils
+import com.example.rebornfinance.core.money.MoneyUtils
+import com.example.rebornfinance.data.local.AppDatabase
+import com.example.rebornfinance.data.repository.MovementRepositoryImpl
+import com.example.rebornfinance.data.repository.RebornProjectRepositoryImpl
+import com.example.rebornfinance.domain.calculator.ProjectCalculator
+import com.example.rebornfinance.domain.model.Movement
+import com.example.rebornfinance.domain.model.MovementType
+import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectStatus
+import com.example.rebornfinance.domain.model.RebornProject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
+
+class ProjectDetailViewModel(application: Application, private val projectId: Long) : AndroidViewModel(application) {
+    private val database = AppDatabase.getDatabase(application)
+    private val projectRepository = RebornProjectRepositoryImpl(database.rebornProjectDao(), database.projectCostDao())
+    private val movementRepository = MovementRepositoryImpl(database.movementDao())
+
+    val project: StateFlow<RebornProject?> = MutableStateFlow<RebornProject?>(null).apply {
+        viewModelScope.launch {
+            value = projectRepository.getProjectById(projectId)
+        }
+    }
+
+    val costs: StateFlow<List<ProjectCost>> = projectRepository.getCostsForProject(projectId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addCost(concept: String, amountStr: String, notes: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val cents = MoneyUtils.parseAmountToCents(amountStr)
+        if (cents == null || cents <= 0L) {
+            onError("Introduce un importe válido.")
+            return
+        }
+        if (concept.isBlank()) {
+            onError("El concepto es obligatorio.")
+            return
+        }
+
+        viewModelScope.launch {
+            val now = DateUtils.getCurrentTimestamp()
+            val cost = ProjectCost(
+                projectId = projectId,
+                concept = concept.trim(),
+                amountCents = cents,
+                date = now,
+                notes = notes?.takeIf { it.isNotBlank() },
+                createdAt = now
+            )
+            projectRepository.insertCost(cost)
+            onSuccess()
+        }
+    }
+
+    fun deleteCost(cost: ProjectCost) {
+        viewModelScope.launch {
+            projectRepository.deleteCost(cost)
+        }
+    }
+
+    fun updateStatus(newStatus: ProjectStatus) {
+        viewModelScope.launch {
+            projectRepository.getProjectById(projectId)?.let { proj ->
+                val updated = proj.copy(status = newStatus, updatedAt = DateUtils.getCurrentTimestamp())
+                projectRepository.updateProject(updated)
+                // Refresh project flow if needed
+                refreshProject()
+            }
+        }
+    }
+
+    fun registerSale(salePriceStr: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val cents = MoneyUtils.parseAmountToCents(salePriceStr)
+        if (cents == null || cents <= 0L) {
+            onError("Introduce un precio de venta válido.")
+            return
+        }
+
+        viewModelScope.launch {
+            val proj = projectRepository.getProjectById(projectId) ?: return@launch
+            val now = DateUtils.getCurrentTimestamp()
+
+            // Create financial income movement for the sale
+            val movement = Movement(
+                type = MovementType.INCOME,
+                amountCents = cents,
+                description = "Venta reborn: ${proj.name}",
+                category = "Venta de reborns",
+                date = now,
+                createdAt = now,
+                updatedAt = now,
+                notes = "Proyecto vinculado ID: ${proj.id}"
+            )
+            movementRepository.insertMovement(movement)
+
+            // Update project status to SOLD and save sale price
+            val updated = proj.copy(
+                status = ProjectStatus.SOLD,
+                actualSalePriceCents = cents,
+                saleDate = now,
+                updatedAt = now
+            )
+            projectRepository.updateProject(updated)
+            refreshProject()
+            onSuccess()
+        }
+    }
+
+    fun deleteProject(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            projectRepository.getProjectById(projectId)?.let { proj ->
+                projectRepository.deleteProject(proj)
+                onSuccess()
+            }
+        }
+    }
+
+    private fun refreshProject() {
+        viewModelScope.launch {
+            (project as MutableStateFlow).value = projectRepository.getProjectById(projectId)
+        }
+    }
+}
