@@ -21,6 +21,7 @@ import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
 import com.example.rebornfinance.domain.calculator.ProjectCalculator
 import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectMaterialConsumption
 import com.example.rebornfinance.domain.model.ProjectStatus
 import com.example.rebornfinance.domain.model.RebornProject
 import com.example.rebornfinance.ui.theme.MutedRed
@@ -35,11 +36,14 @@ fun ProjectDetailScreen(
 ) {
     val project by viewModel.project.collectAsState()
     val costs by viewModel.costs.collectAsState()
+    val materialConsumptions by viewModel.materialConsumptions.collectAsState()
 
     var showAddCostDialog by remember { mutableStateOf(false) }
     var showRegisterSaleDialog by remember { mutableStateOf(false) }
     var showDeleteProjectDialog by remember { mutableStateOf(false) }
     var costToDelete by remember { mutableStateOf<ProjectCost?>(null) }
+    var consumptionToDelete by remember { mutableStateOf<ProjectMaterialConsumption?>(null) }
+    var materialActionError by remember { mutableStateOf<String?>(null) }
 
     // Add Cost Dialog state
     var conceptInput by remember { mutableStateOf("") }
@@ -59,7 +63,7 @@ fun ProjectDetailScreen(
                     OutlinedTextField(
                         value = conceptInput,
                         onValueChange = { conceptInput = it },
-                        label = { Text("Concepto (ej: Kit, Envío...)") },
+                        label = { Text("Concepto (ej: Cuerpo, Envío...)") },
                         singleLine = true
                     )
                     OutlinedTextField(
@@ -183,6 +187,27 @@ fun ProjectDetailScreen(
         )
     }
 
+    if (consumptionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { consumptionToDelete = null },
+            title = { Text("Eliminar consumo de material") },
+            text = { Text("¿Eliminar el consumo de '${consumptionToDelete?.category}'?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    consumptionToDelete?.let { viewModel.deleteMaterialConsumption(it) }
+                    consumptionToDelete = null
+                }) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { consumptionToDelete = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -214,7 +239,7 @@ fun ProjectDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            val totalCost = ProjectCalculator.calculateTotalCost(costs)
+            val totalCost = ProjectCalculator.calculateTotalCost(costs, materialConsumptions)
             val estProfit = ProjectCalculator.calculateEstimatedProfit(currentProject.predictedSalePriceCents, totalCost)
             val saleProfit = ProjectCalculator.calculateSaleProfit(currentProject.actualSalePriceCents, totalCost)
 
@@ -295,7 +320,7 @@ fun ProjectDetailScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Coste total acumulado:")
+                                Text("Coste total fabricación:")
                                 Text(MoneyUtils.formatCents(totalCost), fontWeight = FontWeight.Bold)
                             }
                             currentProject.predictedSalePriceCents?.let { pred ->
@@ -343,13 +368,114 @@ fun ProjectDetailScreen(
                 }
 
                 item {
+                    // Material Consumptions Section
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Costes del proyecto",
+                            text = "Materiales (Imprimación, Pintura, Barniz)",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.assignMaterialConsumption(
+                                    "Imprimación",
+                                    onSuccess = { materialActionError = null },
+                                    onError = { err -> materialActionError = err }
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("+ Imprimación")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.assignMaterialConsumption(
+                                    "Pintura",
+                                    onSuccess = { materialActionError = null },
+                                    onError = { err -> materialActionError = err }
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("+ Pintura")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.assignMaterialConsumption(
+                                    "Barniz",
+                                    onSuccess = { materialActionError = null },
+                                    onError = { err -> materialActionError = err }
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("+ Barniz")
+                        }
+                    }
+                    if (materialActionError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = materialActionError!!, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+
+                if (materialConsumptions.isNotEmpty()) {
+                    items(materialConsumptions) { mc ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "Material: ${mc.category}", fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = "Consumo: ${mc.consumedQuantity / 1000.0} ${mc.unit} (FIFO)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = MoneyUtils.formatCents(mc.assignedCostCents),
+                                        fontWeight = FontWeight.Bold,
+                                        color = SageGreen
+                                    )
+                                    IconButton(onClick = { consumptionToDelete = mc }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar consumo", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Otros costes manuales",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -366,11 +492,11 @@ fun ProjectDetailScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No hay costes registrados para este proyecto.",
+                                text = "No hay costes manuales adicionales registrados.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

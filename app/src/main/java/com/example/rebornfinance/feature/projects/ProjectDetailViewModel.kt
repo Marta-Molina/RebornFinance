@@ -6,24 +6,32 @@ import androidx.lifecycle.viewModelScope
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
 import com.example.rebornfinance.data.local.AppDatabase
+import com.example.rebornfinance.data.repository.MaterialRepositoryImpl
 import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.data.repository.RebornProjectRepositoryImpl
-import com.example.rebornfinance.domain.calculator.ProjectCalculator
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectMaterialConsumption
 import com.example.rebornfinance.domain.model.ProjectStatus
 import com.example.rebornfinance.domain.model.RebornProject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 class ProjectDetailViewModel(application: Application, private val projectId: Long) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val projectRepository = RebornProjectRepositoryImpl(database.rebornProjectDao(), database.projectCostDao())
+    private val materialRepository = MaterialRepositoryImpl(
+        database,
+        database.materialDao(),
+        database.materialPurchaseLotDao(),
+        database.materialConsumptionRuleDao(),
+        database.projectMaterialConsumptionDao(),
+        database.movementDao()
+    )
     private val movementRepository = MovementRepositoryImpl(database.movementDao())
 
     val project: StateFlow<RebornProject?> = MutableStateFlow<RebornProject?>(null).apply {
@@ -33,6 +41,9 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
     }
 
     val costs: StateFlow<List<ProjectCost>> = projectRepository.getCostsForProject(projectId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val materialConsumptions: StateFlow<List<ProjectMaterialConsumption>> = materialRepository.getConsumptionsForProject(projectId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addCost(concept: String, amountStr: String, notes: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -67,12 +78,29 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
         }
     }
 
+    fun assignMaterialConsumption(category: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val proj = project.value ?: return@launch
+            val result = materialRepository.assignMaterialConsumptionForProject(projectId, category, proj.sizeInches)
+            if (result.isSuccess) {
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Error al calcular el consumo de '$category'.")
+            }
+        }
+    }
+
+    fun deleteMaterialConsumption(consumption: ProjectMaterialConsumption) {
+        viewModelScope.launch {
+            materialRepository.deleteConsumption(consumption)
+        }
+    }
+
     fun updateStatus(newStatus: ProjectStatus) {
         viewModelScope.launch {
             projectRepository.getProjectById(projectId)?.let { proj ->
                 val updated = proj.copy(status = newStatus, updatedAt = DateUtils.getCurrentTimestamp())
                 projectRepository.updateProject(updated)
-                // Refresh project flow if needed
                 refreshProject()
             }
         }
@@ -89,7 +117,6 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
             val proj = projectRepository.getProjectById(projectId) ?: return@launch
             val now = DateUtils.getCurrentTimestamp()
 
-            // Create financial income movement for the sale
             val movement = Movement(
                 type = MovementType.INCOME,
                 amountCents = cents,
@@ -102,7 +129,6 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
             )
             movementRepository.insertMovement(movement)
 
-            // Update project status to SOLD and save sale price
             val updated = proj.copy(
                 status = ProjectStatus.SOLD,
                 actualSalePriceCents = cents,
