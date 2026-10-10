@@ -7,15 +7,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.example.rebornfinance.core.money.MoneyUtils
+import com.example.rebornfinance.core.util.PdfReportUtils
 import com.example.rebornfinance.ui.theme.MutedRed
 import com.example.rebornfinance.ui.theme.SageGreen
 
@@ -39,6 +41,22 @@ fun StatisticsScreen(
                     }
                 },
                 actions = {
+                    // Export PDF
+                    IconButton(onClick = {
+                        val pdfFile = PdfReportUtils.generateFinancialReportPdf(context, stats)
+                        if (pdfFile != null) {
+                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", pdfFile)
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "application/pdf"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Compartir informe PDF"))
+                        }
+                    }) {
+                        Icon(Icons.Default.Info, contentDescription = "Exportar PDF")
+                    }
+                    // Export CSV
                     IconButton(onClick = {
                         val csv = viewModel.exportCsvData()
                         val intent = Intent(Intent.ACTION_SEND).apply {
