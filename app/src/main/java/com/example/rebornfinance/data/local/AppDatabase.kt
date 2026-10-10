@@ -362,6 +362,19 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE reborn_projects ADD COLUMN paintingSystem TEXT NOT NULL DEFAULT 'NONE'")
+                db.execSQL("""
+                    INSERT OR IGNORE INTO material_consumption_rules (category, minInches, maxInches, estimatedConsumption, unit, isActive, createdAt)
+                    VALUES 
+                    ('Imprimación', 10.0, 26.0, 5000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Pintura', 15.0, 17.0, 4000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Pintura', 17.1, 19.0, 5000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Pintura', 19.1, 21.0, 6000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Pintura', 21.1, 26.0, 7000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Barniz', 15.0, 17.0, 1500, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Barniz', 17.1, 19.0, 2000, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Barniz', 19.1, 21.0, 2500, 'ml', 1, ${System.currentTimeMillis()}),
+                    ('Barniz', 21.1, 26.0, 3000, 'ml', 1, ${System.currentTimeMillis()})
+                """)
             }
         }
 
@@ -417,14 +430,11 @@ abstract class AppDatabase : RoomDatabase() {
             private suspend fun populateDefaultConsumptionRules(dao: com.example.rebornfinance.data.local.dao.MaterialConsumptionRuleDao) {
                 val now = System.currentTimeMillis()
                 val defaultRules = listOf(
-                    // Imprimación (covers 16 to 24 inches)
                     MaterialConsumptionRuleEntity(category = "Imprimación", minInches = 10.0, maxInches = 26.0, estimatedConsumption = 5000L, unit = "ml", createdAt = now),
-                    // Pintura
                     MaterialConsumptionRuleEntity(category = "Pintura", minInches = 15.0, maxInches = 17.0, estimatedConsumption = 4000L, unit = "ml", createdAt = now),
                     MaterialConsumptionRuleEntity(category = "Pintura", minInches = 17.1, maxInches = 19.0, estimatedConsumption = 5000L, unit = "ml", createdAt = now),
                     MaterialConsumptionRuleEntity(category = "Pintura", minInches = 19.1, maxInches = 21.0, estimatedConsumption = 6000L, unit = "ml", createdAt = now),
                     MaterialConsumptionRuleEntity(category = "Pintura", minInches = 21.1, maxInches = 26.0, estimatedConsumption = 7000L, unit = "ml", createdAt = now),
-                    // Barniz
                     MaterialConsumptionRuleEntity(category = "Barniz", minInches = 15.0, maxInches = 17.0, estimatedConsumption = 1500L, unit = "ml", createdAt = now),
                     MaterialConsumptionRuleEntity(category = "Barniz", minInches = 17.1, maxInches = 19.0, estimatedConsumption = 2000L, unit = "ml", createdAt = now),
                     MaterialConsumptionRuleEntity(category = "Barniz", minInches = 19.1, maxInches = 21.0, estimatedConsumption = 2500L, unit = "ml", createdAt = now),
