@@ -1,14 +1,23 @@
 package com.example.rebornfinance.domain.calculator
 
 import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectEyeAssignment
+import com.example.rebornfinance.domain.model.ProjectHairConsumption
 import com.example.rebornfinance.domain.model.ProjectMaterialConsumption
 
 object ProjectCalculator {
 
-    fun calculateTotalCost(costs: List<ProjectCost>, materialConsumptions: List<ProjectMaterialConsumption>): Long {
+    fun calculateTotalCost(
+        costs: List<ProjectCost>,
+        materialConsumptions: List<ProjectMaterialConsumption>,
+        eyeAssignments: List<ProjectEyeAssignment>,
+        hairConsumptions: List<ProjectHairConsumption>
+    ): Long {
         val manualTotal = costs.sumOf { it.amountCents }
         val materialsTotal = materialConsumptions.sumOf { it.assignedCostCents }
-        return manualTotal + materialsTotal
+        val eyesTotal = eyeAssignments.filter { !it.isCancelled }.sumOf { it.assignedCostCents }
+        val hairTotal = hairConsumptions.filter { !it.isCancelled }.sumOf { it.assignedCostCents }
+        return manualTotal + materialsTotal + eyesTotal + hairTotal
     }
 
     fun calculateEstimatedProfit(predictedSalePriceCents: Long?, totalCostCents: Long): Long? {

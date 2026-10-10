@@ -9,20 +9,34 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.rebornfinance.data.local.converters.RoomConverters
 import com.example.rebornfinance.data.local.dao.CategoryDao
+import com.example.rebornfinance.data.local.dao.EyeMaterialDao
+import com.example.rebornfinance.data.local.dao.EyePurchaseLotDao
+import com.example.rebornfinance.data.local.dao.HairMaterialDao
+import com.example.rebornfinance.data.local.dao.HairPurchaseLotDao
+import com.example.rebornfinance.data.local.dao.InventoryAuditMovementDao
 import com.example.rebornfinance.data.local.dao.MaterialConsumptionRuleDao
 import com.example.rebornfinance.data.local.dao.MaterialDao
 import com.example.rebornfinance.data.local.dao.MaterialPurchaseLotDao
 import com.example.rebornfinance.data.local.dao.MovementDao
 import com.example.rebornfinance.data.local.dao.ProjectCostDao
+import com.example.rebornfinance.data.local.dao.ProjectEyeAssignmentDao
+import com.example.rebornfinance.data.local.dao.ProjectHairConsumptionDao
 import com.example.rebornfinance.data.local.dao.ProjectMaterialConsumptionDao
 import com.example.rebornfinance.data.local.dao.RebornProjectDao
 import com.example.rebornfinance.data.local.entity.CategoryEntity
+import com.example.rebornfinance.data.local.entity.EyeMaterialEntity
+import com.example.rebornfinance.data.local.entity.EyePurchaseLotEntity
+import com.example.rebornfinance.data.local.entity.HairMaterialEntity
+import com.example.rebornfinance.data.local.entity.HairPurchaseLotEntity
+import com.example.rebornfinance.data.local.entity.InventoryAuditMovementEntity
 import com.example.rebornfinance.data.local.entity.MaterialAdjustmentEntity
 import com.example.rebornfinance.data.local.entity.MaterialConsumptionRuleEntity
 import com.example.rebornfinance.data.local.entity.MaterialEntity
 import com.example.rebornfinance.data.local.entity.MaterialPurchaseLotEntity
 import com.example.rebornfinance.data.local.entity.MovementEntity
 import com.example.rebornfinance.data.local.entity.ProjectCostEntity
+import com.example.rebornfinance.data.local.entity.ProjectEyeAssignmentEntity
+import com.example.rebornfinance.data.local.entity.ProjectHairConsumptionEntity
 import com.example.rebornfinance.data.local.entity.ProjectMaterialConsumptionEntity
 import com.example.rebornfinance.data.local.entity.RebornProjectEntity
 import com.example.rebornfinance.domain.model.MovementType
@@ -40,9 +54,16 @@ import kotlinx.coroutines.launch
         MaterialPurchaseLotEntity::class,
         MaterialConsumptionRuleEntity::class,
         ProjectMaterialConsumptionEntity::class,
-        MaterialAdjustmentEntity::class
+        MaterialAdjustmentEntity::class,
+        EyeMaterialEntity::class,
+        EyePurchaseLotEntity::class,
+        ProjectEyeAssignmentEntity::class,
+        HairMaterialEntity::class,
+        HairPurchaseLotEntity::class,
+        ProjectHairConsumptionEntity::class,
+        InventoryAuditMovementEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -55,6 +76,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun materialPurchaseLotDao(): MaterialPurchaseLotDao
     abstract fun materialConsumptionRuleDao(): MaterialConsumptionRuleDao
     abstract fun projectMaterialConsumptionDao(): ProjectMaterialConsumptionDao
+    abstract fun eyeMaterialDao(): EyeMaterialDao
+    abstract fun eyePurchaseLotDao(): EyePurchaseLotDao
+    abstract fun projectEyeAssignmentDao(): ProjectEyeAssignmentDao
+    abstract fun hairMaterialDao(): HairMaterialDao
+    abstract fun hairPurchaseLotDao(): HairPurchaseLotDao
+    abstract fun projectHairConsumptionDao(): ProjectHairConsumptionDao
+    abstract fun inventoryAuditMovementDao(): InventoryAuditMovementDao
 
     companion object {
         @Volatile
@@ -162,6 +190,102 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `eye_materials` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `color` TEXT NOT NULL,
+                        `diameterMm` REAL,
+                        `type` TEXT NOT NULL,
+                        `modality` TEXT NOT NULL,
+                        `brand` TEXT,
+                        `notes` TEXT,
+                        `isActive` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `eye_purchase_lots` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `eyeMaterialId` INTEGER NOT NULL,
+                        `purchasedQuantity` INTEGER NOT NULL,
+                        `remainingQuantity` INTEGER NOT NULL,
+                        `paidAmountCents` INTEGER NOT NULL,
+                        `purchaseDate` INTEGER NOT NULL,
+                        `notes` TEXT,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `project_eye_assignments` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `projectId` INTEGER NOT NULL,
+                        `eyeMaterialId` INTEGER NOT NULL,
+                        `quantity` INTEGER NOT NULL,
+                        `assignedCostCents` INTEGER NOT NULL,
+                        `isCancelled` INTEGER NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `hair_materials` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `hairType` TEXT NOT NULL,
+                        `color` TEXT NOT NULL,
+                        `brand` TEXT,
+                        `notes` TEXT,
+                        `isActive` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `hair_purchase_lots` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `hairMaterialId` INTEGER NOT NULL,
+                        `purchasedQuantityGrams` INTEGER NOT NULL,
+                        `remainingQuantityGrams` INTEGER NOT NULL,
+                        `paidAmountCents` INTEGER NOT NULL,
+                        `purchaseDate` INTEGER NOT NULL,
+                        `notes` TEXT,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `project_hair_consumptions` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `projectId` INTEGER NOT NULL,
+                        `hairMaterialId` INTEGER NOT NULL,
+                        `consumedQuantityGrams` INTEGER NOT NULL,
+                        `unitCostCentsPerGram` INTEGER NOT NULL,
+                        `assignedCostCents` INTEGER NOT NULL,
+                        `manualReason` TEXT,
+                        `isCancelled` INTEGER NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `inventory_audit_movements` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `materialType` TEXT NOT NULL,
+                        `materialId` INTEGER NOT NULL,
+                        `projectId` INTEGER,
+                        `movementType` TEXT NOT NULL,
+                        `quantity` INTEGER NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        `notes` TEXT,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -169,7 +293,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reborn_finance_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance

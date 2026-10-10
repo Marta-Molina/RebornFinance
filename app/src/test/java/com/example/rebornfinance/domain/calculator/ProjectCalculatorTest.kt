@@ -18,7 +18,7 @@ class ProjectCalculatorTest {
             ProjectMaterialConsumption(id = 1, projectId = 1, category = "Imprimación", consumedQuantity = 1000L, unit = "ml", unitCostCents = 100L, assignedCostCents = 100L, date = 0L, createdAt = 0L),
             ProjectMaterialConsumption(id = 2, projectId = 1, category = "Pintura", consumedQuantity = 5000L, unit = "ml", unitCostCents = 100L, assignedCostCents = 500L, date = 0L, createdAt = 0L)
         )
-        val total = ProjectCalculator.calculateTotalCost(costs, consumptions)
+        val total = ProjectCalculator.calculateTotalCost(costs, consumptions, emptyList(), emptyList())
         assertEquals(9350L, total) // 7500 + 1250 + 100 + 500 = 9350
     }
 

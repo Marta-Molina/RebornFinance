@@ -6,12 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
 import com.example.rebornfinance.data.local.AppDatabase
+import com.example.rebornfinance.data.repository.EyeMaterialRepositoryImpl
+import com.example.rebornfinance.data.repository.HairMaterialRepositoryImpl
 import com.example.rebornfinance.data.repository.MaterialRepositoryImpl
 import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.data.repository.RebornProjectRepositoryImpl
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectEyeAssignment
+import com.example.rebornfinance.domain.model.ProjectHairConsumption
 import com.example.rebornfinance.domain.model.ProjectMaterialConsumption
 import com.example.rebornfinance.domain.model.ProjectStatus
 import com.example.rebornfinance.domain.model.RebornProject
@@ -32,6 +36,20 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
         database.projectMaterialConsumptionDao(),
         database.movementDao()
     )
+    private val eyeRepository = EyeMaterialRepositoryImpl(
+        database,
+        database.eyeMaterialDao(),
+        database.eyePurchaseLotDao(),
+        database.projectEyeAssignmentDao(),
+        database.movementDao()
+    )
+    private val hairRepository = HairMaterialRepositoryImpl(
+        database,
+        database.hairMaterialDao(),
+        database.hairPurchaseLotDao(),
+        database.projectHairConsumptionDao(),
+        database.movementDao()
+    )
     private val movementRepository = MovementRepositoryImpl(database.movementDao())
 
     val project: StateFlow<RebornProject?> = MutableStateFlow<RebornProject?>(null).apply {
@@ -44,6 +62,12 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val materialConsumptions: StateFlow<List<ProjectMaterialConsumption>> = materialRepository.getConsumptionsForProject(projectId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val eyeAssignments: StateFlow<List<ProjectEyeAssignment>> = eyeRepository.getAssignmentsForProject(projectId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val hairConsumptions: StateFlow<List<ProjectHairConsumption>> = hairRepository.getConsumptionsForProject(projectId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addCost(concept: String, amountStr: String, notes: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -93,6 +117,18 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
     fun deleteMaterialConsumption(consumption: ProjectMaterialConsumption) {
         viewModelScope.launch {
             materialRepository.deleteConsumption(consumption)
+        }
+    }
+
+    fun cancelEyeAssignment(assignmentId: Long) {
+        viewModelScope.launch {
+            eyeRepository.cancelEyeAssignment(assignmentId)
+        }
+    }
+
+    fun cancelHairConsumption(consumptionId: Long) {
+        viewModelScope.launch {
+            hairRepository.cancelHairConsumption(consumptionId)
         }
     }
 

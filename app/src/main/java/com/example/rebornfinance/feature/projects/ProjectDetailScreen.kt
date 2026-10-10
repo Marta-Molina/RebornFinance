@@ -21,6 +21,8 @@ import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
 import com.example.rebornfinance.domain.calculator.ProjectCalculator
 import com.example.rebornfinance.domain.model.ProjectCost
+import com.example.rebornfinance.domain.model.ProjectEyeAssignment
+import com.example.rebornfinance.domain.model.ProjectHairConsumption
 import com.example.rebornfinance.domain.model.ProjectMaterialConsumption
 import com.example.rebornfinance.domain.model.ProjectStatus
 import com.example.rebornfinance.domain.model.RebornProject
@@ -37,12 +39,16 @@ fun ProjectDetailScreen(
     val project by viewModel.project.collectAsState()
     val costs by viewModel.costs.collectAsState()
     val materialConsumptions by viewModel.materialConsumptions.collectAsState()
+    val eyeAssignments by viewModel.eyeAssignments.collectAsState()
+    val hairConsumptions by viewModel.hairConsumptions.collectAsState()
 
     var showAddCostDialog by remember { mutableStateOf(false) }
     var showRegisterSaleDialog by remember { mutableStateOf(false) }
     var showDeleteProjectDialog by remember { mutableStateOf(false) }
     var costToDelete by remember { mutableStateOf<ProjectCost?>(null) }
     var consumptionToDelete by remember { mutableStateOf<ProjectMaterialConsumption?>(null) }
+    var eyeAssignmentToCancel by remember { mutableStateOf<ProjectEyeAssignment?>(null) }
+    var hairConsumptionToCancel by remember { mutableStateOf<ProjectHairConsumption?>(null) }
     var materialActionError by remember { mutableStateOf<String?>(null) }
 
     // Add Cost Dialog state
@@ -208,6 +214,48 @@ fun ProjectDetailScreen(
         )
     }
 
+    if (eyeAssignmentToCancel != null) {
+        AlertDialog(
+            onDismissRequest = { eyeAssignmentToCancel = null },
+            title = { Text("Cancelar asignación de ojos") },
+            text = { Text("¿Cancelar esta asignación y devolver el stock al inventario?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    eyeAssignmentToCancel?.let { viewModel.cancelEyeAssignment(it.id) }
+                    eyeAssignmentToCancel = null
+                }) {
+                    Text("Cancelar asignación", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eyeAssignmentToCancel = null }) {
+                    Text("Volver")
+                }
+            }
+        )
+    }
+
+    if (hairConsumptionToCancel != null) {
+        AlertDialog(
+            onDismissRequest = { hairConsumptionToCancel = null },
+            title = { Text("Cancelar consumo de pelo") },
+            text = { Text("¿Cancelar este consumo y devolver el pelo al inventario?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    hairConsumptionToCancel?.let { viewModel.cancelHairConsumption(it.id) }
+                    hairConsumptionToCancel = null
+                }) {
+                    Text("Cancelar consumo", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { hairConsumptionToCancel = null }) {
+                    Text("Volver")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -239,7 +287,7 @@ fun ProjectDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            val totalCost = ProjectCalculator.calculateTotalCost(costs, materialConsumptions)
+            val totalCost = ProjectCalculator.calculateTotalCost(costs, materialConsumptions, eyeAssignments, hairConsumptions)
             val estProfit = ProjectCalculator.calculateEstimatedProfit(currentProject.predictedSalePriceCents, totalCost)
             val saleProfit = ProjectCalculator.calculateSaleProfit(currentProject.actualSalePriceCents, totalCost)
 
@@ -368,7 +416,7 @@ fun ProjectDetailScreen(
                 }
 
                 item {
-                    // Material Consumptions Section
+                    // Material Consumptions Section (Fase 3 & 4)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -461,6 +509,96 @@ fun ProjectDetailScreen(
                                     )
                                     IconButton(onClick = { consumptionToDelete = mc }) {
                                         Icon(Icons.Default.Delete, contentDescription = "Eliminar consumo", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Eye assignments
+                if (eyeAssignments.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Ojos asignados",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    items(eyeAssignments) { assignment ->
+                        if (!assignment.isCancelled) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(text = "Ojos (Cantidad: ${assignment.quantity})", fontWeight = FontWeight.Medium)
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = MoneyUtils.formatCents(assignment.assignedCostCents),
+                                            fontWeight = FontWeight.Bold,
+                                            color = SageGreen
+                                        )
+                                        IconButton(onClick = { eyeAssignmentToCancel = assignment }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Cancelar asignación de ojos", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Hair consumptions
+                if (hairConsumptions.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Pelo asignado",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    items(hairConsumptions) { hair ->
+                        if (!hair.isCancelled) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(text = "Pelo (${hair.consumedQuantityGrams / 1000.0} g)", fontWeight = FontWeight.Medium)
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = MoneyUtils.formatCents(hair.assignedCostCents),
+                                            fontWeight = FontWeight.Bold,
+                                            color = SageGreen
+                                        )
+                                        IconButton(onClick = { hairConsumptionToCancel = hair }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Cancelar consumo de pelo", tint = MaterialTheme.colorScheme.error)
+                                        }
                                     }
                                 }
                             }
