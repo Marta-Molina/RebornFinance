@@ -8,7 +8,10 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.rebornfinance.data.local.converters.RoomConverters
+import com.example.rebornfinance.data.local.dao.BudgetDao
 import com.example.rebornfinance.data.local.dao.CategoryDao
+import com.example.rebornfinance.data.local.dao.EnvelopeDao
+import com.example.rebornfinance.data.local.dao.EnvelopeOperationDao
 import com.example.rebornfinance.data.local.dao.EyeMaterialDao
 import com.example.rebornfinance.data.local.dao.EyePurchaseLotDao
 import com.example.rebornfinance.data.local.dao.HairMaterialDao
@@ -23,7 +26,11 @@ import com.example.rebornfinance.data.local.dao.ProjectEyeAssignmentDao
 import com.example.rebornfinance.data.local.dao.ProjectHairConsumptionDao
 import com.example.rebornfinance.data.local.dao.ProjectMaterialConsumptionDao
 import com.example.rebornfinance.data.local.dao.RebornProjectDao
+import com.example.rebornfinance.data.local.dao.SavingsGoalDao
+import com.example.rebornfinance.data.local.entity.BudgetEntity
 import com.example.rebornfinance.data.local.entity.CategoryEntity
+import com.example.rebornfinance.data.local.entity.EnvelopeEntity
+import com.example.rebornfinance.data.local.entity.EnvelopeOperationEntity
 import com.example.rebornfinance.data.local.entity.EyeMaterialEntity
 import com.example.rebornfinance.data.local.entity.EyePurchaseLotEntity
 import com.example.rebornfinance.data.local.entity.HairMaterialEntity
@@ -39,6 +46,7 @@ import com.example.rebornfinance.data.local.entity.ProjectEyeAssignmentEntity
 import com.example.rebornfinance.data.local.entity.ProjectHairConsumptionEntity
 import com.example.rebornfinance.data.local.entity.ProjectMaterialConsumptionEntity
 import com.example.rebornfinance.data.local.entity.RebornProjectEntity
+import com.example.rebornfinance.data.local.entity.SavingsGoalEntity
 import com.example.rebornfinance.domain.model.MovementType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,9 +69,13 @@ import kotlinx.coroutines.launch
         HairMaterialEntity::class,
         HairPurchaseLotEntity::class,
         ProjectHairConsumptionEntity::class,
-        InventoryAuditMovementEntity::class
+        InventoryAuditMovementEntity::class,
+        EnvelopeEntity::class,
+        EnvelopeOperationEntity::class,
+        BudgetEntity::class,
+        SavingsGoalEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -83,6 +95,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun hairPurchaseLotDao(): HairPurchaseLotDao
     abstract fun projectHairConsumptionDao(): ProjectHairConsumptionDao
     abstract fun inventoryAuditMovementDao(): InventoryAuditMovementDao
+    abstract fun envelopeDao(): EnvelopeDao
+    abstract fun envelopeOperationDao(): EnvelopeOperationDao
+    abstract fun budgetDao(): BudgetDao
+    abstract fun savingsGoalDao(): SavingsGoalDao
 
     companion object {
         @Volatile
@@ -286,6 +302,63 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `envelopes` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `description` TEXT,
+                        `targetAmountCents` INTEGER,
+                        `currentAmountCents` INTEGER NOT NULL,
+                        `color` TEXT,
+                        `isActive` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `envelope_operations` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `envelopeId` INTEGER NOT NULL,
+                        `operationType` TEXT NOT NULL,
+                        `targetEnvelopeId` INTEGER,
+                        `amountCents` INTEGER NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        `notes` TEXT,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `budgets` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `category` TEXT NOT NULL,
+                        `limitAmountCents` INTEGER NOT NULL,
+                        `period` TEXT NOT NULL,
+                        `startDate` INTEGER NOT NULL,
+                        `endDate` INTEGER NOT NULL,
+                        `isActive` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `savings_goals` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `description` TEXT,
+                        `targetAmountCents` INTEGER NOT NULL,
+                        `currentAmountCents` INTEGER NOT NULL,
+                        `linkedEnvelopeId` INTEGER,
+                        `targetDate` INTEGER,
+                        `status` TEXT NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """)
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -293,7 +366,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reborn_finance_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
