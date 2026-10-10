@@ -25,4 +25,7 @@ sealed class Screen(val route: String) {
 
     // Phase 6: Statistics
     object Statistics : Screen("statistics")
+
+    // Phase 7: Smart Input (Natural Language)
+    object SmartInput : Screen("smart_input")
 }

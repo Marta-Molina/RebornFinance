@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -38,6 +39,7 @@ fun HomeScreen(
     onNavigateToMovements: () -> Unit,
     onNavigateToProjects: () -> Unit,
     onNavigateToStatistics: () -> Unit,
+    onNavigateToSmartInput: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAddMovement: () -> Unit,
     onNavigateToEditMovement: (Long) -> Unit
@@ -53,6 +55,9 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 actions = {
+                    IconButton(onClick = onNavigateToSmartInput) {
+                        Icon(Icons.Default.Create, contentDescription = "Entrada inteligente")
+                    }
                     IconButton(onClick = onNavigateToStatistics) {
                         Icon(Icons.Default.Star, contentDescription = "Estadísticas")
                     }
@@ -85,10 +90,10 @@ fun HomeScreen(
                     onClick = onNavigateToProjects
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Star, contentDescription = "Estadísticas") },
-                    label = { Text("Informes") },
+                    icon = { Icon(Icons.Default.Create, contentDescription = "Inteligente") },
+                    label = { Text("Voz/Texto") },
                     selected = false,
-                    onClick = onNavigateToStatistics
+                    onClick = onNavigateToSmartInput
                 )
             }
         },
@@ -133,6 +138,56 @@ fun HomeScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                    }
+                }
+            }
+
+            item {
+                // Quick Access Card for Smart Input
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onNavigateToSmartInput),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(SageGreen.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Create,
+                                    contentDescription = null,
+                                    tint = SageGreen
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Entrada inteligente",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Escribe de forma natural para registrar operaciones",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }

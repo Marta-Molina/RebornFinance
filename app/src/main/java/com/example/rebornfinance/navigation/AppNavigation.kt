@@ -23,6 +23,8 @@ import com.example.rebornfinance.feature.projects.ProjectsScreen
 import com.example.rebornfinance.feature.projects.ProjectsViewModel
 import com.example.rebornfinance.feature.settings.SettingsScreen
 import com.example.rebornfinance.feature.settings.SettingsViewModel
+import com.example.rebornfinance.feature.smartinput.SmartInputScreen
+import com.example.rebornfinance.feature.smartinput.SmartInputViewModel
 import com.example.rebornfinance.feature.statistics.StatisticsScreen
 import com.example.rebornfinance.feature.statistics.StatisticsViewModel
 
@@ -40,6 +42,7 @@ fun AppNavigation() {
                 onNavigateToMovements = { navController.navigate(Screen.Movements.route) },
                 onNavigateToProjects = { navController.navigate(Screen.Projects.route) },
                 onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
+                onNavigateToSmartInput = { navController.navigate(Screen.SmartInput.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToAddMovement = { navController.navigate(Screen.MovementForm.createRoute()) },
                 onNavigateToEditMovement = { id -> navController.navigate(Screen.MovementForm.createRoute(id)) }
@@ -116,6 +119,14 @@ fun AppNavigation() {
         composable(Screen.Statistics.route) {
             val viewModel: StatisticsViewModel = viewModel()
             StatisticsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.SmartInput.route) {
+            val viewModel: SmartInputViewModel = viewModel()
+            SmartInputScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
