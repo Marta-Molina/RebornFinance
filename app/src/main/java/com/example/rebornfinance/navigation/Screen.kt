@@ -22,4 +22,7 @@ sealed class Screen(val route: String) {
             return if (projectId != null) "project_form?projectId=$projectId" else "project_form"
         }
     }
+
+    // Phase 6: Statistics
+    object Statistics : Screen("statistics")
 }

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToMovements: () -> Unit,
     onNavigateToProjects: () -> Unit,
+    onNavigateToStatistics: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAddMovement: () -> Unit,
     onNavigateToEditMovement: (Long) -> Unit
@@ -51,6 +53,9 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 actions = {
+                    IconButton(onClick = onNavigateToStatistics) {
+                        Icon(Icons.Default.Star, contentDescription = "Estadísticas")
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Ajustes")
                     }
@@ -80,10 +85,10 @@ fun HomeScreen(
                     onClick = onNavigateToProjects
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Ajustes") },
-                    label = { Text("Ajustes") },
+                    icon = { Icon(Icons.Default.Star, contentDescription = "Estadísticas") },
+                    label = { Text("Informes") },
                     selected = false,
-                    onClick = onNavigateToSettings
+                    onClick = onNavigateToStatistics
                 )
             }
         },
