@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
         BudgetEntity::class,
         SavingsGoalEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -359,6 +359,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE reborn_projects ADD COLUMN paintingSystem TEXT NOT NULL DEFAULT 'NONE'")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -366,7 +372,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reborn_finance_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -380,13 +386,13 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE?.let { database ->
                     CoroutineScope(Dispatchers.IO).launch {
                         populateInitialCategories(database.categoryDao())
+                        populateDefaultConsumptionRules(database.materialConsumptionRuleDao())
                     }
                 }
             }
 
             private suspend fun populateInitialCategories(dao: CategoryDao) {
                 val initialCategories = listOf(
-                    // Gastos
                     CategoryEntity(name = "Materiales", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Pinturas y barnices", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Ojos", type = MovementType.EXPENSE),
@@ -398,16 +404,35 @@ abstract class AppDatabase : RoomDatabase() {
                     CategoryEntity(name = "Comisiones", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Gastos personales", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Otros", type = MovementType.EXPENSE),
-                    // Ingresos
                     CategoryEntity(name = "Venta de reborns", type = MovementType.INCOME),
                     CategoryEntity(name = "Venta de materiales", type = MovementType.INCOME),
                     CategoryEntity(name = "Otros trabajos", type = MovementType.INCOME),
                     CategoryEntity(name = "Otros ingresos", type = MovementType.INCOME),
-                    // Reembolsos
                     CategoryEntity(name = "Reembolso de compras", type = MovementType.REFUND),
                     CategoryEntity(name = "Otros reembolsos", type = MovementType.REFUND)
                 )
                 dao.insertCategories(initialCategories)
+            }
+
+            private suspend fun populateDefaultConsumptionRules(dao: com.example.rebornfinance.data.local.dao.MaterialConsumptionRuleDao) {
+                val now = System.currentTimeMillis()
+                val defaultRules = listOf(
+                    // Imprimación (covers 16 to 24 inches)
+                    MaterialConsumptionRuleEntity(category = "Imprimación", minInches = 10.0, maxInches = 26.0, estimatedConsumption = 5000L, unit = "ml", createdAt = now),
+                    // Pintura
+                    MaterialConsumptionRuleEntity(category = "Pintura", minInches = 15.0, maxInches = 17.0, estimatedConsumption = 4000L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Pintura", minInches = 17.1, maxInches = 19.0, estimatedConsumption = 5000L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Pintura", minInches = 19.1, maxInches = 21.0, estimatedConsumption = 6000L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Pintura", minInches = 21.1, maxInches = 26.0, estimatedConsumption = 7000L, unit = "ml", createdAt = now),
+                    // Barniz
+                    MaterialConsumptionRuleEntity(category = "Barniz", minInches = 15.0, maxInches = 17.0, estimatedConsumption = 1500L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Barniz", minInches = 17.1, maxInches = 19.0, estimatedConsumption = 2000L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Barniz", minInches = 19.1, maxInches = 21.0, estimatedConsumption = 2500L, unit = "ml", createdAt = now),
+                    MaterialConsumptionRuleEntity(category = "Barniz", minInches = 21.1, maxInches = 26.0, estimatedConsumption = 3000L, unit = "ml", createdAt = now)
+                )
+                for (rule in defaultRules) {
+                    dao.insertRule(rule)
+                }
             }
         }
     }

@@ -11,9 +11,92 @@ object LocalRuleBasedParser {
         val lower = text.lowercase().trim()
         val now = DateUtils.getCurrentTimestamp()
 
-        // 1. Expense check: "gastado [amount] euros en [desc]" or "gastado [amount] euros en [desc] para el proyecto [project]"
-        if (lower.contains("gastado") || lower.contains("gasto")) {
-            val amountCents = extractAmountCents(lower)
+        val amountCents = extractAmountCents(lower)
+
+        // 1. Eyes check
+        if (lower.contains("ojos")) {
+            val desc = extractDescriptionAfter(lower, "en") ?: "Ojos para reborn"
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = desc.replaceFirstChar { it.uppercase() },
+                category = "Ojos",
+                date = now,
+                materialName = "Ojos",
+                explanation = "Reconocido como compra/gasto de ojos (Analizador local)."
+            )
+        }
+
+        // 2. Hair check
+        if (lower.contains("pelo") || lower.contains("mohair") || lower.contains("gramos")) {
+            val desc = extractDescriptionAfter(lower, "en") ?: "Pelo para reborn"
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = desc.replaceFirstChar { it.uppercase() },
+                category = "Pelo",
+                date = now,
+                materialName = "Pelo",
+                explanation = "Reconocido como compra/gasto de pelo (Analizador local)."
+            )
+        }
+
+        // 3. Needles / Agujas check
+        if (lower.contains("agujas") || lower.contains("aguja")) {
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = "Agujas de rooting",
+                category = "Herramientas",
+                date = now,
+                materialName = "Agujas",
+                explanation = "Reconocido como compra de agujas (Analizador local)."
+            )
+        }
+
+        // 4. Priming / Imprimación
+        if (lower.contains("imprimación")) {
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = "Imprimación",
+                category = "Materiales",
+                date = now,
+                materialName = "Imprimación",
+                explanation = "Reconocido como material de imprimación (Analizador local)."
+            )
+        }
+
+        // 5. Paint / Pinturas
+        if (lower.contains("pintura") || lower.contains("pinturas")) {
+            val projectName = extractProjectName(lower)
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = "Pinturas y barnices",
+                category = "Pinturas y barnices",
+                date = now,
+                projectName = projectName,
+                materialName = "Pintura",
+                explanation = "Reconocido como compra de pinturas (Analizador local)."
+            )
+        }
+
+        // 6. Varnish / Barniz
+        if (lower.contains("barniz")) {
+            return ParsedOperationProposal(
+                operationType = "EXPENSE",
+                amountCents = amountCents,
+                description = "Barniz",
+                category = "Pinturas y barnices",
+                date = now,
+                materialName = "Barniz",
+                explanation = "Reconocido como compra de barniz (Analizador local)."
+            )
+        }
+
+        // 7. General Expense check
+        if (lower.contains("gastado") || lower.contains("gasto") || lower.contains("comprado")) {
             val desc = extractDescriptionAfter(lower, "en") ?: "Gasto general"
             val projectName = extractProjectName(lower)
             val category = if (projectName != null) "Materiales" else "Otros"
@@ -29,9 +112,8 @@ object LocalRuleBasedParser {
             )
         }
 
-        // 2. Sale / Income check: "vendí el reborn [name] por [amount]"
+        // 8. Sale / Income check
         if (lower.contains("vendí") || lower.contains("vendido")) {
-            val amountCents = extractAmountCents(lower)
             val projectName = extractProjectName(lower) ?: "Reborn"
             return ParsedOperationProposal(
                 operationType = "INCOME",
@@ -44,9 +126,8 @@ object LocalRuleBasedParser {
             )
         }
 
-        // 3. Refund check: "devuelto [amount] euros"
+        // 9. Refund check
         if (lower.contains("devuelto") || lower.contains("reembolsado")) {
-            val amountCents = extractAmountCents(lower)
             return ParsedOperationProposal(
                 operationType = "REFUND",
                 amountCents = amountCents,
@@ -57,9 +138,8 @@ object LocalRuleBasedParser {
             )
         }
 
-        // 4. Envelope add: "reservado [amount] euros" or "reservado [amount] euros para [envelope]"
+        // 10. Envelope add
         if (lower.contains("reservado") || lower.contains("guardado")) {
-            val amountCents = extractAmountCents(lower)
             val envName = extractDescriptionAfter(lower, "para") ?: "Ahorro"
             return ParsedOperationProposal(
                 operationType = "ENVELOPE_ADD",
@@ -72,23 +152,7 @@ object LocalRuleBasedParser {
             )
         }
 
-        // 5. Envelope withdraw: "retirado [amount] euros del sobre [envelope]"
-        if (lower.contains("retirado") || lower.contains("sacado")) {
-            val amountCents = extractAmountCents(lower)
-            val envName = extractDescriptionAfter(lower, "sobre") ?: "Ahorro"
-            return ParsedOperationProposal(
-                operationType = "ENVELOPE_WITHDRAW",
-                amountCents = amountCents,
-                description = "Retirada de sobre",
-                category = "Ahorro",
-                date = now,
-                envelopeName = envName.replaceFirstChar { it.uppercase() },
-                explanation = "Analizado mediante reglas locales (Analizador determinista)."
-            )
-        }
-
         // Default fallback
-        val amountCents = extractAmountCents(lower)
         return ParsedOperationProposal(
             operationType = "EXPENSE",
             amountCents = amountCents,
@@ -102,14 +166,12 @@ object LocalRuleBasedParser {
     }
 
     private fun extractAmountCents(text: String): Long? {
-        // Matches numbers like 35, 12,50, 450, etc. before "euros" or €
         val pattern = Pattern.compile("(\\d+([.,]\\d{1,2})?)\\s*(?:euros|€)")
         val matcher = pattern.matcher(text)
         if (matcher.find()) {
             val numStr = matcher.group(1) ?: return null
             return MoneyUtils.parseAmountToCents(numStr)
         }
-        // Fallback to any number
         val generalPattern = Pattern.compile("(\\d+([.,]\\d{1,2})?)")
         val generalMatcher = generalPattern.matcher(text)
         if (generalMatcher.find()) {
@@ -123,7 +185,6 @@ object LocalRuleBasedParser {
         val idx = text.indexOf(keyword)
         if (idx == -1) return null
         val sub = text.substring(idx + keyword.length).trim()
-        // Cut off at "por", "para", "el", etc. if present
         val stopWords = listOf(" por ", " para ", " el ", " ayer ")
         var endIdx = sub.length
         for (stop in stopWords) {

@@ -12,6 +12,7 @@ data class RebornProject(
     val actualSalePriceCents: Long? = null,
     val saleDate: Long? = null,
     val notes: String? = null,
+    val paintingSystem: String = "NONE", // "HEAT_SET" (Termosellable), "AIR_DRY" (Secado al aire), "NONE"
     val createdAt: Long,
     val updatedAt: Long
 )

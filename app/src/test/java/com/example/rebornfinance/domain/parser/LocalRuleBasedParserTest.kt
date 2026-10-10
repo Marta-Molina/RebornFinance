@@ -1,7 +1,6 @@
 package com.example.rebornfinance.domain.parser
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class LocalRuleBasedParserTest {
@@ -27,5 +26,15 @@ class LocalRuleBasedParserTest {
         val proposal = LocalRuleBasedParser.parse("Me han devuelto 12,50 euros de un pedido")
         assertEquals("REFUND", proposal.operationType)
         assertEquals(1250L, proposal.amountCents)
+    }
+
+    @Test
+    fun testParseEyesAndHair() {
+        val eyesProp = LocalRuleBasedParser.parse("He comprado un par de ojos azules de 20 mm por 16,90 €")
+        assertEquals("Ojos", eyesProp.category)
+        assertEquals(1690L, eyesProp.amountCents)
+
+        val hairProp = LocalRuleBasedParser.parse("He gastado 2 gramos de mohair rubio")
+        assertEquals("Pelo", hairProp.category)
     }
 }

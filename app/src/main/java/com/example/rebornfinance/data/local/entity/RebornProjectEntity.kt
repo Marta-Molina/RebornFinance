@@ -19,6 +19,7 @@ data class RebornProjectEntity(
     val actualSalePriceCents: Long? = null,
     val saleDate: Long? = null,
     val notes: String? = null,
+    val paintingSystem: String = "NONE",
     val createdAt: Long,
     val updatedAt: Long
 ) {
@@ -34,6 +35,7 @@ data class RebornProjectEntity(
         actualSalePriceCents = actualSalePriceCents,
         saleDate = saleDate,
         notes = notes,
+        paintingSystem = paintingSystem,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -51,6 +53,7 @@ data class RebornProjectEntity(
             actualSalePriceCents = project.actualSalePriceCents,
             saleDate = project.saleDate,
             notes = project.notes,
+            paintingSystem = project.paintingSystem,
             createdAt = project.createdAt,
             updatedAt = project.updatedAt
         )
