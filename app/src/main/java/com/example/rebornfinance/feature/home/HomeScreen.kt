@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToMovements: () -> Unit,
     onNavigateToProjects: () -> Unit,
+    onNavigateToInventory: () -> Unit,
     onNavigateToStatistics: () -> Unit,
     onNavigateToSmartInput: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -90,10 +92,10 @@ fun HomeScreen(
                     onClick = onNavigateToProjects
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Create, contentDescription = "Inteligente") },
-                    label = { Text("Voz/Texto") },
+                    icon = { Icon(Icons.Default.Menu, contentDescription = "Inventario") },
+                    label = { Text("Inventario") },
                     selected = false,
-                    onClick = onNavigateToSmartInput
+                    onClick = onNavigateToInventory
                 )
             }
         },
@@ -143,11 +145,11 @@ fun HomeScreen(
             }
 
             item {
-                // Quick Access Card for Smart Input
+                // Quick Access Card for Inventory
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = onNavigateToSmartInput),
+                        .clickable(onClick = onNavigateToInventory),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -166,23 +168,23 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(SageGreen.copy(alpha = 0.15f)),
+                                    .background(PrimaryMauve.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.Create,
+                                    Icons.Default.Menu,
                                     contentDescription = null,
-                                    tint = SageGreen
+                                    tint = PrimaryMauve
                                 )
                             }
                             Column {
                                 Text(
-                                    text = "Entrada inteligente",
+                                    text = "Inventario de Materiales",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Escribe de forma natural para registrar operaciones",
+                                    text = "Consulta existencias, ojos, pelo y lotes de compra",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -216,13 +218,13 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(PrimaryMauve.copy(alpha = 0.15f)),
+                                    .background(SageGreen.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     Icons.Default.Favorite,
                                     contentDescription = null,
-                                    tint = PrimaryMauve
+                                    tint = SageGreen
                                 )
                             }
                             Column {

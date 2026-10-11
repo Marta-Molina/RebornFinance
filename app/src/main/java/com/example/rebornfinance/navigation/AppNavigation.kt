@@ -11,6 +11,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.rebornfinance.feature.home.HomeScreen
 import com.example.rebornfinance.feature.home.HomeViewModel
+import com.example.rebornfinance.feature.inventory.InventoryScreen
+import com.example.rebornfinance.feature.inventory.InventoryViewModel
 import com.example.rebornfinance.feature.movements.MovementFormScreen
 import com.example.rebornfinance.feature.movements.MovementFormViewModel
 import com.example.rebornfinance.feature.movements.MovementsScreen
@@ -41,6 +43,7 @@ fun AppNavigation() {
                 viewModel = viewModel,
                 onNavigateToMovements = { navController.navigate(Screen.Movements.route) },
                 onNavigateToProjects = { navController.navigate(Screen.Projects.route) },
+                onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
                 onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
                 onNavigateToSmartInput = { navController.navigate(Screen.SmartInput.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
@@ -111,6 +114,14 @@ fun AppNavigation() {
             val projectId = if (projectIdArg != null && projectIdArg > 0L) projectIdArg else null
             val viewModel = ProjectFormViewModel(app, projectId)
             ProjectFormScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Inventory.route) {
+            val viewModel: InventoryViewModel = viewModel()
+            InventoryScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )

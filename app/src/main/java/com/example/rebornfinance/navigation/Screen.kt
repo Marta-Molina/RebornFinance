@@ -23,6 +23,9 @@ sealed class Screen(val route: String) {
         }
     }
 
+    // Phase 3 & 9: Inventory
+    object Inventory : Screen("inventory")
+
     // Phase 6: Statistics
     object Statistics : Screen("statistics")
 

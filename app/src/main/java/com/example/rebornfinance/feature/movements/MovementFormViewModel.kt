@@ -3,12 +3,20 @@ package com.example.rebornfinance.feature.movements
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
 import com.example.rebornfinance.data.local.AppDatabase
+import com.example.rebornfinance.data.local.entity.EyeMaterialEntity
+import com.example.rebornfinance.data.local.entity.EyePurchaseLotEntity
+import com.example.rebornfinance.data.local.entity.HairMaterialEntity
+import com.example.rebornfinance.data.local.entity.HairPurchaseLotEntity
+import com.example.rebornfinance.data.local.entity.MaterialEntity
+import com.example.rebornfinance.data.local.entity.MaterialPurchaseLotEntity
 import com.example.rebornfinance.data.repository.CategoryRepositoryImpl
 import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.domain.model.Category
+import com.example.rebornfinance.domain.model.EyeModality
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,22 +76,89 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
 
         viewModelScope.launch {
             val now = DateUtils.getCurrentTimestamp()
-            val movement = Movement(
-                id = movementId ?: 0L,
-                type = type.value,
-                amountCents = cents,
-                description = description.value.trim(),
-                category = category.value,
-                date = dateMillis.value,
-                createdAt = if (isEditMode) createdAtOriginal else now,
-                updatedAt = now,
-                notes = notes.value.takeIf { it.isNotBlank() }
-            )
+            database.withTransaction {
+                val movement = Movement(
+                    id = movementId ?: 0L,
+                    type = type.value,
+                    amountCents = cents,
+                    description = description.value.trim(),
+                    category = category.value,
+                    date = dateMillis.value,
+                    createdAt = if (isEditMode) createdAtOriginal else now,
+                    updatedAt = now,
+                    notes = notes.value.takeIf { it.isNotBlank() }
+                )
 
-            if (isEditMode) {
-                movementRepository.updateMovement(movement)
-            } else {
-                movementRepository.insertMovement(movement)
+                if (isEditMode) {
+                    movementRepository.updateMovement(movement)
+                } else {
+                    movementRepository.insertMovement(movement)
+
+                    if (type.value == MovementType.EXPENSE) {
+                        val cat = category.value
+                        if (cat.equals("Ojos", true)) {
+                            val eyeMat = EyeMaterialEntity(
+                                name = description.value.trim(),
+                                color = "Estándar",
+                                type = "Cristal/Acrílico",
+                                modality = EyeModality.PAIRS,
+                                createdAt = now,
+                                updatedAt = now
+                            )
+                            val eyeId = database.eyeMaterialDao().insertEyeMaterial(eyeMat)
+                            database.eyePurchaseLotDao().insertLot(
+                                EyePurchaseLotEntity(
+                                    eyeMaterialId = eyeId,
+                                    purchasedQuantity = 1L,
+                                    remainingQuantity = 1L,
+                                    paidAmountCents = cents,
+                                    purchaseDate = dateMillis.value,
+                                    createdAt = now
+                                )
+                            )
+                        } else if (cat.equals("Pelo", true)) {
+                            val hairMat = HairMaterialEntity(
+                                name = description.value.trim(),
+                                hairType = "Mohair",
+                                color = "Estándar",
+                                createdAt = now,
+                                updatedAt = now
+                            )
+                            val hairId = database.hairMaterialDao().insertHairMaterial(hairMat)
+                            database.hairPurchaseLotDao().insertLot(
+                                HairPurchaseLotEntity(
+                                    hairMaterialId = hairId,
+                                    purchasedQuantityGrams = 10000L, // 10g
+                                    remainingQuantityGrams = 10000L,
+                                    paidAmountCents = cents,
+                                    purchaseDate = dateMillis.value,
+                                    createdAt = now
+                                )
+                            )
+                        } else if (cat.equals("Materiales", true) || cat.equals("Pinturas y barnices", true)) {
+                            val mat = MaterialEntity(
+                                name = description.value.trim(),
+                                category = cat,
+                                unit = "ml",
+                                totalPurchased = 10000L,
+                                availableQuantity = 10000L,
+                                createdAt = now,
+                                updatedAt = now
+                            )
+                            val matId = database.materialDao().insertMaterial(mat)
+                            database.materialPurchaseLotDao().insertLot(
+                                MaterialPurchaseLotEntity(
+                                    materialId = matId,
+                                    purchasedQuantity = 10000L,
+                                    remainingQuantity = 10000L,
+                                    paidAmountCents = cents,
+                                    purchaseDate = dateMillis.value,
+                                    createdAt = now
+                                )
+                            )
+                        }
+                    }
+                }
             }
             onSuccess()
         }
