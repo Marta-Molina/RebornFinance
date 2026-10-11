@@ -28,8 +28,8 @@ fun InventoryScreen(
     val eyeMaterials by viewModel.eyeMaterials.collectAsState()
     val hairMaterials by viewModel.hairMaterials.collectAsState()
 
-    var selectedCategory by remember { mutableStateOf(initialCategory ?: "Todas") }
-    var selectedSubCategory by remember { mutableStateOf(initialSubCategory) }
+    var selectedCategory by remember(initialCategory) { mutableStateOf(initialCategory ?: "Todas") }
+    var selectedSubCategory by remember(initialSubCategory) { mutableStateOf(initialSubCategory) }
 
     val catalog = viewModel.catalog
     val categories = listOf("Todas") + catalog.keys.toList()

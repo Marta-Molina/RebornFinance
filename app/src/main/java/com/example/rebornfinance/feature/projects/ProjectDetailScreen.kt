@@ -43,12 +43,12 @@ fun ProjectDetailScreen(
     val hairConsumptions by viewModel.hairConsumptions.collectAsState()
     val allEyeMaterials by viewModel.allEyeMaterials.collectAsState()
     val allHairMaterials by viewModel.allHairMaterials.collectAsState()
+    val generalMaterials by viewModel.generalMaterials.collectAsState()
 
     var showAddCostDialog by remember { mutableStateOf(false) }
     var showRegisterSaleDialog by remember { mutableStateOf(false) }
     var showDeleteProjectDialog by remember { mutableStateOf(false) }
-    var showEyeSelectDialog by remember { mutableStateOf(false) }
-    var showHairSelectDialog by remember { mutableStateOf(false) }
+    var showInventoryPopup by remember { mutableStateOf(false) }
 
     var costToDelete by remember { mutableStateOf<ProjectCost?>(null) }
     var consumptionToDelete by remember { mutableStateOf<ProjectMaterialConsumption?>(null) }
@@ -65,92 +65,55 @@ fun ProjectDetailScreen(
     var salePriceInput by remember { mutableStateOf("") }
     var saleError by remember { mutableStateOf<String?>(null) }
 
-    // Eye assign state
-    var selectedEyeQty by remember { mutableStateOf("1") }
+    // General material assign qty
+    var assignQtyInput by remember { mutableStateOf("1") }
 
-    // Hair assign state
-    var selectedHairGrams by remember { mutableStateOf("5") }
-
-    if (showEyeSelectDialog) {
+    if (showInventoryPopup) {
         AlertDialog(
-            onDismissRequest = { showEyeSelectDialog = false },
-            title = { Text("Seleccionar ojos del inventario") },
+            onDismissRequest = { showInventoryPopup = false },
+            title = { Text("Añadir material del inventario") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (allEyeMaterials.isEmpty()) {
-                        Text("No hay referencias de ojos en el inventario. Añade una comprando ojos desde 'Nuevo movimiento'.")
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Selecciona un artículo general del inventario:", style = MaterialTheme.typography.bodyMedium)
+                    if (generalMaterials.isEmpty()) {
+                        Text("No hay materiales generales en el inventario. Registra compras desde 'Nuevo movimiento'.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        allEyeMaterials.forEach { eye ->
-                            OutlinedButton(
-                                onClick = {
-                                    val qty = selectedEyeQty.toLongOrNull() ?: 1L
-                                    viewModel.assignEyes(
-                                        eyeMaterialId = eye.id,
-                                        quantity = qty,
-                                        onSuccess = { showEyeSelectDialog = false; materialActionError = null },
-                                        onError = { err -> materialActionError = err }
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("${eye.name} (${eye.color})")
+                        LazyColumn(
+                            modifier = Modifier.height(200.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(generalMaterials) { mat ->
+                                OutlinedButton(
+                                    onClick = {
+                                        val qty = (assignQtyInput.toDoubleOrNull() ?: 1.0) * 1000.0
+                                        viewModel.assignSpecificMaterial(
+                                            materialId = mat.id,
+                                            quantity = qty.toLong(),
+                                            onSuccess = { showInventoryPopup = false; materialActionError = null },
+                                            onError = { err -> materialActionError = err }
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("${mat.name} (${mat.category}) - Stock: ${mat.availableQuantity / 1000.0} ${mat.unit}")
+                                }
                             }
                         }
                     }
                     OutlinedTextField(
-                        value = selectedEyeQty,
-                        onValueChange = { selectedEyeQty = it },
-                        label = { Text("Cantidad / Pares") },
+                        value = assignQtyInput,
+                        onValueChange = { assignQtyInput = it },
+                        label = { Text("Cantidad a usar") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showEyeSelectDialog = false }) {
-                    Text("Cerrar")
-                }
-            }
-        )
-    }
-
-    if (showHairSelectDialog) {
-        AlertDialog(
-            onDismissRequest = { showHairSelectDialog = false },
-            title = { Text("Seleccionar pelo del inventario") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (allHairMaterials.isEmpty()) {
-                        Text("No hay referencias de pelo en el inventario. Añade pelo comprando desde 'Nuevo movimiento'.")
-                    } else {
-                        allHairMaterials.forEach { hair ->
-                            OutlinedButton(
-                                onClick = {
-                                    val grams = (selectedHairGrams.toDoubleOrNull() ?: 5.0) * 1000.0
-                                    viewModel.assignHair(
-                                        hairMaterialId = hair.id,
-                                        quantityGrams = grams.toLong(),
-                                        onSuccess = { showHairSelectDialog = false; materialActionError = null },
-                                        onError = { err -> materialActionError = err }
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("${hair.name} (${hair.hairType} - ${hair.color})")
-                            }
-                        }
-                    }
-                    OutlinedTextField(
-                        value = selectedHairGrams,
-                        onValueChange = { selectedHairGrams = it },
-                        label = { Text("Gramos a usar") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showHairSelectDialog = false }) {
+                TextButton(onClick = { showInventoryPopup = false }) {
                     Text("Cerrar")
                 }
             }
@@ -578,16 +541,10 @@ fun ProjectDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = { showEyeSelectDialog = true },
+                            onClick = { showInventoryPopup = true },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Elegir Ojos...")
-                        }
-                        Button(
-                            onClick = { showHairSelectDialog = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Elegir Pelo...")
+                            Text("Añadir del inventario...")
                         }
                     }
                     if (materialActionError != null) {

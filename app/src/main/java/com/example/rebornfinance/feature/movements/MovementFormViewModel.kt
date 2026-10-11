@@ -17,6 +17,7 @@ import com.example.rebornfinance.data.repository.CategoryRepositoryImpl
 import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.domain.model.Category
 import com.example.rebornfinance.domain.model.EyeModality
+import com.example.rebornfinance.domain.model.InventoryCatalog
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,10 +34,13 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
     val categories: StateFlow<List<Category>> = categoryRepository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val catalog = InventoryCatalog.categoriesWithSubcategories
+
     var type = MutableStateFlow(MovementType.EXPENSE)
     var amountStr = MutableStateFlow("")
     var description = MutableStateFlow("")
     var category = MutableStateFlow("")
+    var subCategory = MutableStateFlow<String?>(null)
     var dateMillis = MutableStateFlow(DateUtils.getCurrentTimestamp())
     var notes = MutableStateFlow("")
 
@@ -96,11 +100,13 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
 
                     if (type.value == MovementType.EXPENSE) {
                         val cat = category.value
+                        val subCat = subCategory.value
                         if (cat.equals("Ojos", true)) {
                             val eyeMat = EyeMaterialEntity(
                                 name = description.value.trim(),
                                 color = "Estándar",
                                 type = "Cristal/Acrílico",
+                                subCategory = subCat,
                                 modality = EyeModality.PAIRS,
                                 createdAt = now,
                                 updatedAt = now
@@ -116,11 +122,12 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                                     createdAt = now
                                 )
                             )
-                        } else if (cat.equals("Pelo", true)) {
+                        } else if (cat.equals("Pelo y cabello", true)) {
                             val hairMat = HairMaterialEntity(
                                 name = description.value.trim(),
                                 hairType = "Mohair",
                                 color = "Estándar",
+                                subCategory = subCat,
                                 createdAt = now,
                                 updatedAt = now
                             )
@@ -128,18 +135,20 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                             database.hairPurchaseLotDao().insertLot(
                                 HairPurchaseLotEntity(
                                     hairMaterialId = hairId,
-                                    purchasedQuantityGrams = 10000L, // 10g
+                                    purchasedQuantityGrams = 10000L,
                                     remainingQuantityGrams = 10000L,
                                     paidAmountCents = cents,
                                     purchaseDate = dateMillis.value,
                                     createdAt = now
                                 )
                             )
-                        } else if (cat.equals("Materiales", true) || cat.equals("Pinturas y barnices", true)) {
+                        } else {
+                            // General inventoriable material
                             val mat = MaterialEntity(
                                 name = description.value.trim(),
                                 category = cat,
-                                unit = "ml",
+                                subCategory = subCat,
+                                unit = "unidades",
                                 totalPurchased = 10000L,
                                 availableQuantity = 10000L,
                                 createdAt = now,

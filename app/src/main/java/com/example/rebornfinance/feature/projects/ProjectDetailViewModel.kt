@@ -13,6 +13,7 @@ import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.data.repository.RebornProjectRepositoryImpl
 import com.example.rebornfinance.domain.model.EyeMaterial
 import com.example.rebornfinance.domain.model.HairMaterial
+import com.example.rebornfinance.domain.model.Material
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import com.example.rebornfinance.domain.model.ProjectCost
@@ -78,6 +79,9 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
     val allHairMaterials: StateFlow<List<HairMaterial>> = hairRepository.getAllHairMaterials()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val generalMaterials: StateFlow<List<Material>> = materialRepository.getAllMaterials()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun addCost(concept: String, amountStr: String, notes: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val cents = MoneyUtils.parseAmountToCents(amountStr)
         if (cents == null || cents <= 0L) {
@@ -118,6 +122,17 @@ class ProjectDetailViewModel(application: Application, private val projectId: Lo
                 onSuccess()
             } else {
                 onError(result.exceptionOrNull()?.message ?: "Error al calcular el consumo de '$category'.")
+            }
+        }
+    }
+
+    fun assignSpecificMaterial(materialId: Long, quantity: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = materialRepository.assignSpecificMaterialToProject(projectId, materialId, quantity)
+            if (result.isSuccess) {
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Error al asignar material.")
             }
         }
     }

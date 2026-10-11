@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rebornfinance.domain.model.InventoryCatalog
 import com.example.rebornfinance.domain.model.MovementType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,13 +27,16 @@ fun MovementFormScreen(
     val amountStr by viewModel.amountStr.collectAsState()
     val description by viewModel.description.collectAsState()
     val category by viewModel.category.collectAsState()
+    val subCategory by viewModel.subCategory.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var expandedCategoryDropdown by remember { mutableStateOf(false) }
+    var expandedSubCategoryDropdown by remember { mutableStateOf(false) }
 
     val filteredCategories = categories.filter { it.type == type }
+    val availableSubCategories = InventoryCatalog.categoriesWithSubcategories[category] ?: emptyList()
 
     Scaffold(
         topBar = {
@@ -68,6 +72,7 @@ fun MovementFormScreen(
                     onClick = {
                         viewModel.type.value = MovementType.EXPENSE
                         viewModel.category.value = ""
+                        viewModel.subCategory.value = null
                     },
                     label = { Text("Gasto") },
                     modifier = Modifier.weight(1f)
@@ -77,6 +82,7 @@ fun MovementFormScreen(
                     onClick = {
                         viewModel.type.value = MovementType.INCOME
                         viewModel.category.value = ""
+                        viewModel.subCategory.value = null
                     },
                     label = { Text("Ingreso") },
                     modifier = Modifier.weight(1f)
@@ -86,6 +92,7 @@ fun MovementFormScreen(
                     onClick = {
                         viewModel.type.value = MovementType.REFUND
                         viewModel.category.value = ""
+                        viewModel.subCategory.value = null
                     },
                     label = { Text("Reembolso") },
                     modifier = Modifier.weight(1f)
@@ -109,7 +116,7 @@ fun MovementFormScreen(
                 value = description,
                 onValueChange = { viewModel.description.value = it },
                 label = { Text("Descripción") },
-                placeholder = { Text("Ej: Silicona platino, Venta reborn...") },
+                placeholder = { Text("Ej: Mohair premium, Ojos cristal...") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -124,7 +131,7 @@ fun MovementFormScreen(
                     value = category,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Categoría") },
+                    label = { Text("Categoría principal") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryDropdown) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,9 +147,44 @@ fun MovementFormScreen(
                             text = { Text(cat.name) },
                             onClick = {
                                 viewModel.category.value = cat.name
+                                viewModel.subCategory.value = null
                                 expandedCategoryDropdown = false
                             }
                         )
+                    }
+                }
+            }
+
+            // SubCategory Dropdown (Cascading)
+            if (availableSubCategories.isNotEmpty()) {
+                ExposedDropdownMenuBox(
+                    expanded = expandedSubCategoryDropdown,
+                    onExpandedChange = { expandedSubCategoryDropdown = !expandedSubCategoryDropdown }
+                ) {
+                    OutlinedTextField(
+                        value = subCategory ?: "Selecciona subcategoría",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Subcategoría") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSubCategoryDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedSubCategoryDropdown,
+                        onDismissRequest = { expandedSubCategoryDropdown = false }
+                    ) {
+                        availableSubCategories.forEach { sub ->
+                            DropdownMenuItem(
+                                text = { Text(sub) },
+                                onClick = {
+                                    viewModel.subCategory.value = sub
+                                    expandedSubCategoryDropdown = false
+                                }
+                            )
+                        }
                     }
                 }
             }
