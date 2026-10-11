@@ -2,7 +2,7 @@ package com.example.rebornfinance.domain.model
 
 object InventoryCatalog {
     val categoriesWithSubcategories = mapOf(
-        "Kits y esculturas" to listOf(
+        "Kits" to listOf(
             "Kits completos",
             "Kits de edición limitada",
             "Kits de edición abierta",
@@ -15,19 +15,10 @@ object InventoryCatalog {
             "Cuerpos de silicona",
             "Otros cuerpos y piezas"
         ),
-        "Cuerpos y extremidades" to listOf(
-            "Cuerpos de tela",
-            "Cuerpos de vinilo",
-            "Cuerpos de silicona",
-            "Extremidades completas",
-            "Extremidades 3/4",
-            "Extremidades 1/2",
-            "Extremidades 1/4"
-        ),
         "Ojos" to listOf(
             "Ojos de cristal",
             "Ojos de acrílico",
-            "Ojos de silicona",
+            "Ojos de silicona u otros materiales disponibles",
             "Ojos durmientes",
             "Otros tipos de ojos"
         ),
@@ -36,13 +27,15 @@ object InventoryCatalog {
             "Pelo humano",
             "Pelo sintético",
             "Alpaca",
-            "Pelucas preparadas"
+            "Otros tipos de pelo",
+            "Pelucas o piezas de pelo preparadas"
         ),
         "Imprimaciones" to listOf(
             "Imprimación para vinilo",
             "Imprimación para silicona",
             "Preparadores de superficie",
-            "Selladores de preparación"
+            "Selladores de preparación",
+            "Otros productos de preparación"
         ),
         "Pinturas y pigmentos" to listOf(
             "Pinturas acrílicas (Air dry)",
@@ -50,14 +43,16 @@ object InventoryCatalog {
             "Pinturas específicas para silicona",
             "Pinturas termosellables",
             "Pigmentos en polvo",
-            "Pinturas para detalles"
+            "Pinturas para detalles",
+            "Otros tipos de pintura"
         ),
         "Barnices y acabados" to listOf(
             "Barniz mate",
             "Barniz satinado",
             "Barniz brillante",
             "Skin texture",
-            "Selladores finales"
+            "Selladores finales",
+            "Otros acabados"
         ),
         "Rellenos y pesos" to listOf(
             "Guata",
@@ -65,8 +60,8 @@ object InventoryCatalog {
             "Cuentas de vidrio",
             "Granulado de vidrio",
             "Microesferas",
-            "Discos de acero",
-            "Pellets de plástico"
+            "Material de peso",
+            "Otros rellenos"
         ),
         "Adhesivos y consumibles" to listOf(
             "Pegamentos",
@@ -75,7 +70,9 @@ object InventoryCatalog {
             "Selladores",
             "Disolventes",
             "Limpiadores",
-            "Cintas e imanes"
+            "Cintas",
+            "Imanes",
+            "Otros consumibles"
         ),
         "Herramientas reutilizables" to listOf(
             "Pinceles",
@@ -84,16 +81,15 @@ object InventoryCatalog {
             "Herramientas de montaje",
             "Herramientas de injerto",
             "Alicates y pinzas",
-            "Utensilios de medición"
+            "Utensilios de medición",
+            "Otras herramientas"
         ),
         "Agujas y accesorios" to listOf(
-            "Agujas de injerto 36G",
-            "Agujas de injerto 40G",
-            "Agujas de injerto 42G",
-            "Agujas de injerto 43G",
-            "Agujas de injerto 46G",
+            "Agujas de injerto",
+            "Agujas de diferentes tamaños",
             "Soportes",
-            "Accesorios de injerto"
+            "Accesorios de injerto",
+            "Otros accesorios"
         ),
         "Ropa y complementos" to listOf(
             "Ropa",
@@ -101,7 +97,8 @@ object InventoryCatalog {
             "Calcetines y zapatos",
             "Mantas",
             "Chupetes",
-            "Diademas y accesorios"
+            "Diademas y accesorios",
+            "Otros complementos"
         ),
         "Embalaje y envíos" to listOf(
             "Cajas",
@@ -109,11 +106,13 @@ object InventoryCatalog {
             "Papel de protección",
             "Material acolchado",
             "Etiquetas",
-            "Tarjetas y flyers"
+            "Tarjetas y flyers",
+            "Material decorativo",
+            "Otros materiales de envío"
         ),
         "Otros materiales" to listOf(
             "Materiales diversos",
-            "Accesorios personalizados"
+            "Personalizados"
         )
     )
 }
