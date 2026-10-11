@@ -1,8 +1,8 @@
 package com.example.rebornfinance.domain.model
 
 object InventoryCatalog {
-    val categoriesWithSubcategories = mapOf(
-        "Kits" to listOf(
+    val masterCatalog = mapOf(
+        "Kits y esculturas" to listOf(
             "Kits completos",
             "Kits de edición limitada",
             "Kits de edición abierta",
@@ -18,9 +18,9 @@ object InventoryCatalog {
         "Ojos" to listOf(
             "Ojos de cristal",
             "Ojos de acrílico",
-            "Ojos de silicona u otros materiales disponibles",
-            "Ojos durmientes",
-            "Otros tipos de ojos"
+            "Ojos de silicona",
+            "Ojos de otros materiales",
+            "Otros artículos y componentes para ojos"
         ),
         "Pelo y cabello" to listOf(
             "Mohair",
@@ -28,9 +28,9 @@ object InventoryCatalog {
             "Pelo sintético",
             "Alpaca",
             "Otros tipos de pelo",
-            "Pelucas o piezas de pelo preparadas"
+            "Pelucas y piezas de pelo preparadas"
         ),
-        "Imprimaciones" to listOf(
+        "Imprimaciones y preparación de superficies" to listOf(
             "Imprimación para vinilo",
             "Imprimación para silicona",
             "Preparadores de superficie",
@@ -38,21 +38,20 @@ object InventoryCatalog {
             "Otros productos de preparación"
         ),
         "Pinturas y pigmentos" to listOf(
-            "Pinturas acrílicas (Air dry)",
+            "Pinturas acrílicas de secado al aire (Air Dry)",
             "Pinturas específicas para vinilo",
             "Pinturas específicas para silicona",
             "Pinturas termosellables",
             "Pigmentos en polvo",
             "Pinturas para detalles",
-            "Otros tipos de pintura"
+            "Otros tipos de pintura y pigmento"
         ),
         "Barnices y acabados" to listOf(
-            "Barniz mate",
-            "Barniz satinado",
-            "Barniz brillante",
-            "Skin texture",
+            "Barnices mate",
+            "Barnices satinados",
+            "Barnices brillantes",
             "Selladores finales",
-            "Otros acabados"
+            "Otros barnices y acabados"
         ),
         "Rellenos y pesos" to listOf(
             "Guata",
@@ -60,38 +59,36 @@ object InventoryCatalog {
             "Cuentas de vidrio",
             "Granulado de vidrio",
             "Microesferas",
-            "Material de peso",
-            "Otros rellenos"
+            "Discos de acero",
+            "Pellets de plástico",
+            "Otros rellenos y materiales de peso"
         ),
-        "Adhesivos y consumibles" to listOf(
-            "Pegamentos",
+        "Adhesivos y consumibles auxiliares" to listOf(
+            "Pegamentos y adhesivos generales",
             "Adhesivos para pelo",
-            "Pegamento para imanes",
-            "Selladores",
+            "Adhesivos para imanes",
+            "Selladores auxiliares",
             "Disolventes",
             "Limpiadores",
             "Cintas",
-            "Imanes",
-            "Otros consumibles"
+            "Imanes y componentes auxiliares",
+            "Otros consumibles auxiliares"
         ),
         "Herramientas reutilizables" to listOf(
             "Pinceles",
             "Esponjas reutilizables",
             "Herramientas de pintura",
             "Herramientas de montaje",
-            "Herramientas de injerto",
             "Alicates y pinzas",
             "Utensilios de medición",
-            "Otras herramientas"
+            "Otras herramientas reutilizables"
         ),
-        "Agujas y accesorios" to listOf(
+        "Agujas y accesorios de injerto" to listOf(
             "Agujas de injerto",
-            "Agujas de diferentes tamaños",
-            "Soportes",
-            "Accesorios de injerto",
-            "Otros accesorios"
+            "Soportes y mangos para agujas",
+            "Otros accesorios de injerto"
         ),
-        "Ropa y complementos" to listOf(
+        "Ropa y complementos del bebé" to listOf(
             "Ropa",
             "Gorros",
             "Calcetines y zapatos",
@@ -104,15 +101,27 @@ object InventoryCatalog {
             "Cajas",
             "Bolsas",
             "Papel de protección",
-            "Material acolchado",
+            "Material acolchado y protection",
             "Etiquetas",
-            "Tarjetas y flyers",
+            "Papelería de envío: tarjetas y flyers",
             "Material decorativo",
             "Otros materiales de envío"
         ),
         "Otros materiales" to listOf(
-            "Materiales diversos",
-            "Personalizados"
+            "Otros materiales generales"
         )
+    )
+
+    val categoriesWithSubcategories = masterCatalog
+
+    val needleSizes = listOf(
+        "36G, 3 barbas",
+        "40G, 3 barbas",
+        "42G, 3 barbas",
+        "42G, 1-2 barbas",
+        "42G, 1 barba",
+        "43G, 6 muescas",
+        "43G, 1 barba",
+        "46G, 6 barbas"
     )
 }
