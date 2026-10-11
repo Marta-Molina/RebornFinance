@@ -32,6 +32,7 @@ import com.example.rebornfinance.domain.model.MovementType
 import com.example.rebornfinance.ui.theme.MutedRed
 import com.example.rebornfinance.ui.theme.PrimaryMauve
 import com.example.rebornfinance.ui.theme.SageGreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,282 +49,348 @@ fun HomeScreen(
 ) {
     val movements by viewModel.movements.collectAsState()
     val summary by viewModel.financialSummary.collectAsState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("RebornFinance", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                actions = {
-                    IconButton(onClick = onNavigateToSmartInput) {
-                        Icon(Icons.Default.Create, contentDescription = "Entrada inteligente")
+    val inventoryCategories = listOf(
+        "Kits y esculturas",
+        "Cuerpos y extremidades",
+        "Ojos",
+        "Pelo y cabello",
+        "Imprimaciones",
+        "Pinturas y pigmentos",
+        "Barnices y acabados",
+        "Rellenos y pesos",
+        "Adhesivos y consumibles",
+        "Herramientas reutilizables",
+        "Agujas y accesorios",
+        "Ropa y complementos",
+        "Embalaje y envíos",
+        "Otros materiales"
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Catálogo de Inventario",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider()
+                NavigationDrawerItem(
+                    label = { Text("Ver todo el Inventario") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToInventory()
                     }
-                    IconButton(onClick = onNavigateToStatistics) {
-                        Icon(Icons.Default.Star, contentDescription = "Estadísticas")
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Ajustes")
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(inventoryCategories) { cat ->
+                        NavigationDrawerItem(
+                            label = { Text(cat) },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                onNavigateToInventory()
+                            }
+                        )
                     }
                 }
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-                    label = { Text("Inicio") },
-                    selected = true,
-                    onClick = {}
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.List, contentDescription = "Movimientos") },
-                    label = { Text("Movimientos") },
-                    selected = false,
-                    onClick = onNavigateToMovements
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Favorite, contentDescription = "Mis reborns") },
-                    label = { Text("Reborns") },
-                    selected = false,
-                    onClick = onNavigateToProjects
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Menu, contentDescription = "Inventario") },
-                    label = { Text("Inventario") },
-                    selected = false,
-                    onClick = onNavigateToInventory
-                )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAddMovement,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir movimiento")
             }
         }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                // Balance Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "SALDO ACTUAL",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = MoneyUtils.formatCents(summary.currentBalanceCents),
-                            style = MaterialTheme.typography.displayLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
-
-            item {
-                // Quick Access Card for Inventory
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToInventory),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(PrimaryMauve.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = null,
-                                    tint = PrimaryMauve
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "Inventario de Materiales",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Consulta existencias, ojos, pelo y lotes de compra",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("RebornFinance", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menú lateral de inventario")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    ),
+                    actions = {
+                        IconButton(onClick = onNavigateToSmartInput) {
+                            Icon(Icons.Default.Create, contentDescription = "Entrada inteligente")
+                        }
+                        IconButton(onClick = onNavigateToStatistics) {
+                            Icon(Icons.Default.Star, contentDescription = "Estadísticas")
+                        }
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = "Ajustes")
                         }
                     }
+                )
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
+                        label = { Text("Inicio") },
+                        selected = true,
+                        onClick = {}
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.List, contentDescription = "Movimientos") },
+                        label = { Text("Movimientos") },
+                        selected = false,
+                        onClick = onNavigateToMovements
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Mis reborns") },
+                        label = { Text("Reborns") },
+                        selected = false,
+                        onClick = onNavigateToProjects
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Menu, contentDescription = "Inventario") },
+                        label = { Text("Inventario") },
+                        selected = false,
+                        onClick = onNavigateToInventory
+                    )
+                }
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = onNavigateToAddMovement,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Añadir movimiento")
                 }
             }
-
-            item {
-                // Quick Access Card for Reborn Projects
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToProjects),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Balance Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        shape = RoundedCornerShape(20.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(SageGreen.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Favorite,
-                                    contentDescription = null,
-                                    tint = SageGreen
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "Mis reborns",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Gestiona tus proyectos y costes artísticos",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                // Monthly Summary Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Resumen del mes",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            SummaryItem("Ingresos", summary.monthlyIncomeCents, SageGreen)
-                            SummaryItem("Gastos", summary.monthlyExpenseCents, MutedRed)
-                            SummaryItem("Reembolsos", summary.monthlyRefundCents, PrimaryMauve)
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Balance neto mes", fontWeight = FontWeight.Medium)
                             Text(
-                                text = MoneyUtils.formatCents(summary.monthlyNetCents),
+                                text = "SALDO ACTUAL",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = MoneyUtils.formatCents(summary.currentBalanceCents),
+                                style = MaterialTheme.typography.displayLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = if (summary.monthlyNetCents >= 0) SageGreen else MutedRed
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
                 }
-            }
 
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Últimos movimientos",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    TextButton(onClick = onNavigateToMovements) {
-                        Text("Ver todos")
-                    }
-                }
-            }
-
-            if (movements.isEmpty()) {
                 item {
-                    Box(
+                    // Quick Access Card for Inventory
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                            .clickable(onClick = onNavigateToInventory),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(
-                            text = "No hay movimientos registrados.\n¡Pulsa + para añadir el primero!",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(PrimaryMauve.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Menu,
+                                        contentDescription = null,
+                                        tint = PrimaryMauve
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Inventario de Materiales",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Consulta existencias, ojos, pelo y lotes de compra",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-            } else {
-                items(movements.take(5)) { movement ->
-                    MovementItemRow(movement = movement, onClick = { onNavigateToEditMovement(movement.id) })
-                }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
+                item {
+                    // Quick Access Card for Reborn Projects
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onNavigateToProjects),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(SageGreen.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Favorite,
+                                        contentDescription = null,
+                                        tint = SageGreen
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Mis reborns",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Gestiona tus proyectos y costes artísticos",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    // Monthly Summary Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Resumen del mes",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                SummaryItem("Ingresos", summary.monthlyIncomeCents, SageGreen)
+                                SummaryItem("Gastos", summary.monthlyExpenseCents, MutedRed)
+                                SummaryItem("Reembolsos", summary.monthlyRefundCents, PrimaryMauve)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Balance neto mes", fontWeight = FontWeight.Medium)
+                                Text(
+                                    text = MoneyUtils.formatCents(summary.monthlyNetCents),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (summary.monthlyNetCents >= 0) SageGreen else MutedRed
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Últimos movimientos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        TextButton(onClick = onNavigateToMovements) {
+                            Text("Ver todos")
+                        }
+                    }
+                }
+
+                if (movements.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay movimientos registrados.\n¡Pulsa + para añadir el primero!",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    items(movements.take(5)) { movement ->
+                        MovementItemRow(movement = movement, onClick = { onNavigateToEditMovement(movement.id) })
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }

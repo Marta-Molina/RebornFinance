@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
         BudgetEntity::class,
         SavingsGoalEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -405,6 +405,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Clean up duplicate categories keeping min id
+                db.execSQL("""
+                    DELETE FROM categories 
+                    WHERE id NOT IN (
+                        SELECT MIN(id) 
+                        FROM categories 
+                        GROUP BY name
+                    )
+                """)
+                // 2. Add project specific fields if not present
+                try { db.execSQL("ALTER TABLE reborn_projects ADD COLUMN finishDate INTEGER") } catch (e: Exception) {}
+                try { db.execSQL("ALTER TABLE reborn_projects ADD COLUMN limbsType TEXT") } catch (e: Exception) {}
+                try { db.execSQL("ALTER TABLE reborn_projects ADD COLUMN eyeState TEXT") } catch (e: Exception) {}
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -412,7 +430,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reborn_finance_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -447,14 +465,6 @@ abstract class AppDatabase : RoomDatabase() {
                     CategoryEntity(name = "Ropa y complementos", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Embalaje y envíos", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Otros materiales", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Materiales", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Pinturas y barnices", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Herramientas", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Envíos", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Embalaje", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Comisiones", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Gastos personales", type = MovementType.EXPENSE),
-                    CategoryEntity(name = "Otros", type = MovementType.EXPENSE),
                     CategoryEntity(name = "Venta de reborns", type = MovementType.INCOME),
                     CategoryEntity(name = "Venta de materiales", type = MovementType.INCOME),
                     CategoryEntity(name = "Otros trabajos", type = MovementType.INCOME),
