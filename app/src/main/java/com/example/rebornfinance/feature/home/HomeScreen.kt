@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
+import com.example.rebornfinance.domain.model.InventoryCatalog
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import com.example.rebornfinance.ui.theme.MutedRed
@@ -52,22 +53,7 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val inventoryCategories = listOf(
-        "Kits y esculturas",
-        "Cuerpos y extremidades",
-        "Ojos",
-        "Pelo y cabello",
-        "Imprimaciones",
-        "Pinturas y pigmentos",
-        "Barnices y acabados",
-        "Rellenos y pesos",
-        "Adhesivos y consumibles",
-        "Herramientas reutilizables",
-        "Agujas y accesorios",
-        "Ropa y complementos",
-        "Embalaje y envíos",
-        "Otros materiales"
-    )
+    val inventoryCategories = InventoryCatalog.masterCatalog.keys.toList()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
