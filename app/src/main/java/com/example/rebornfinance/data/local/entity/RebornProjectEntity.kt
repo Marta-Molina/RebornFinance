@@ -14,12 +14,15 @@ data class RebornProjectEntity(
     val sculptorName: String,
     val sizeInches: Double,
     val startDate: Long,
+    val finishDate: Long? = null,
     val status: ProjectStatus,
     val predictedSalePriceCents: Long? = null,
     val actualSalePriceCents: Long? = null,
     val saleDate: Long? = null,
     val notes: String? = null,
     val paintingSystem: String = "NONE",
+    val limbsType: String? = null,
+    val eyeState: String? = null,
     val createdAt: Long,
     val updatedAt: Long
 ) {
@@ -30,12 +33,15 @@ data class RebornProjectEntity(
         sculptorName = sculptorName,
         sizeInches = sizeInches,
         startDate = startDate,
+        finishDate = finishDate,
         status = status,
         predictedSalePriceCents = predictedSalePriceCents,
         actualSalePriceCents = actualSalePriceCents,
         saleDate = saleDate,
         notes = notes,
         paintingSystem = paintingSystem,
+        limbsType = limbsType,
+        eyeState = eyeState,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -48,12 +54,15 @@ data class RebornProjectEntity(
             sculptorName = project.sculptorName,
             sizeInches = project.sizeInches,
             startDate = project.startDate,
+            finishDate = project.finishDate,
             status = project.status,
             predictedSalePriceCents = project.predictedSalePriceCents,
             actualSalePriceCents = project.actualSalePriceCents,
             saleDate = project.saleDate,
             notes = project.notes,
             paintingSystem = project.paintingSystem,
+            limbsType = project.limbsType,
+            eyeState = project.eyeState,
             createdAt = project.createdAt,
             updatedAt = project.updatedAt
         )

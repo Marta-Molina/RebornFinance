@@ -7,12 +7,15 @@ data class RebornProject(
     val sculptorName: String,
     val sizeInches: Double,
     val startDate: Long,
+    val finishDate: Long? = null,
     val status: ProjectStatus,
     val predictedSalePriceCents: Long? = null,
     val actualSalePriceCents: Long? = null,
     val saleDate: Long? = null,
     val notes: String? = null,
     val paintingSystem: String = "NONE", // "HEAT_SET" (Termosellable), "AIR_DRY" (Secado al aire), "NONE"
+    val limbsType: String? = null,
+    val eyeState: String? = null,
     val createdAt: Long,
     val updatedAt: Long
 )
