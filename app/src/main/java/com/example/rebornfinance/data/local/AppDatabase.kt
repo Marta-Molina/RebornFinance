@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
         BudgetEntity::class,
         SavingsGoalEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -389,6 +389,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val categories = listOf(
+                    "Kits y esculturas", "Cuerpos y extremidades", "Ojos", "Pelo y cabello",
+                    "Imprimaciones", "Pinturas y pigmentos", "Barnices y acabados", "Rellenos y pesos",
+                    "Adhesivos y consumibles", "Herramientas reutilizables", "Agujas y accesorios",
+                    "Ropa y complementos", "Embalaje y envíos", "Otros materiales",
+                    "Materiales", "Pinturas y barnices", "Herramientas", "Envíos", "Embalaje",
+                    "Comisiones", "Gastos personales", "Otros"
+                )
+                for (cat in categories) {
+                    db.execSQL("INSERT OR IGNORE INTO categories (name, type, isActive) VALUES ('$cat', 'EXPENSE', 1)")
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -396,7 +412,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "reborn_finance_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
