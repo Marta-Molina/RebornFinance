@@ -176,33 +176,8 @@ class MaterialRepositoryImpl(
             )
 
         val materials = materialDao.getActiveMaterialsByCategory(category)
-        val material = materials.firstOrNull() ?: run {
-            // If no material exists in this category, auto-create a default material so assignment never fails!
-            val now = DateUtils.getCurrentTimestamp()
-            val defaultMat = MaterialEntity(
-                name = "$category Estándar",
-                category = category,
-                unit = ruleEntity.unit,
-                totalPurchased = 50000L, // 50 ml / units
-                availableQuantity = 50000L,
-                isActive = true,
-                createdAt = now,
-                updatedAt = now
-            )
-            val matId = materialDao.insertMaterial(defaultMat)
-            // Also insert an initial lot so FIFO has stock
-            val lot = MaterialPurchaseLotEntity(
-                materialId = matId,
-                purchasedQuantity = 50000L,
-                remainingQuantity = 50000L,
-                paidAmountCents = 1000L, // 10.00 €
-                purchaseDate = now,
-                notes = "Lote inicial automático",
-                createdAt = now
-            )
-            lotDao.insertLot(lot)
-            materialDao.getMaterialById(matId)!!
-        }
+        val material = materials.firstOrNull()
+            ?: return Result.failure(Exception("No hay materiales registrados en el inventario para '$category'. Registra una compra primero."))
 
         val availableLotsEntities = lotDao.getAvailableLotsForMaterial(material.id)
         val lots = availableLotsEntities.map { it.toDomain() }
