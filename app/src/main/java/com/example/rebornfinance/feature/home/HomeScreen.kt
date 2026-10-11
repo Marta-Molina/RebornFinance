@@ -40,7 +40,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToMovements: () -> Unit,
     onNavigateToProjects: () -> Unit,
-    onNavigateToInventory: () -> Unit,
+    onNavigateToInventory: (String?) -> Unit,
     onNavigateToStatistics: () -> Unit,
     onNavigateToSmartInput: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -86,7 +86,7 @@ fun HomeScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        onNavigateToInventory()
+                        onNavigateToInventory(null)
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -102,7 +102,7 @@ fun HomeScreen(
                             selected = false,
                             onClick = {
                                 scope.launch { drawerState.close() }
-                                onNavigateToInventory()
+                                onNavigateToInventory(cat)
                             }
                         )
                     }
@@ -161,7 +161,7 @@ fun HomeScreen(
                         icon = { Icon(Icons.Default.Menu, contentDescription = "Inventario") },
                         label = { Text("Inventario") },
                         selected = false,
-                        onClick = onNavigateToInventory
+                        onClick = { onNavigateToInventory(null) }
                     )
                 }
             },
@@ -215,7 +215,7 @@ fun HomeScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onNavigateToInventory),
+                            .clickable(onClick = { onNavigateToInventory(null) }),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp)
                     ) {

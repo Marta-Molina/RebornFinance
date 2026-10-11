@@ -233,6 +233,61 @@ class MaterialRepositoryImpl(
         return Result.success(created)
     }
 
+    override suspend fun assignSpecificMaterialToProject(
+        projectId: Long,
+        materialId: Long,
+        quantity: Long
+    ): Result<ProjectMaterialConsumption> {
+        val material = materialDao.getMaterialById(materialId)
+            ?: return Result.failure(Exception("Material no encontrado."))
+        val availableLotsEntities = lotDao.getAvailableLotsForMaterial(materialId)
+        val lots = availableLotsEntities.map { it.toDomain() }
+
+        val allocation = MaterialCostCalculator.allocateConsumptionFIFO(quantity, lots)
+        if (!allocation.isSuccessful) {
+            return Result.failure(Exception(allocation.errorMessage ?: "Stock insuficiente."))
+        }
+
+        var consumptionId = 0L
+        database.withTransaction {
+            val now = DateUtils.getCurrentTimestamp()
+            for (alloc in allocation.allocations) {
+                val lotEntity = availableLotsEntities.first { it.id == alloc.lotId }
+                lotDao.updateLot(lotEntity.copy(remainingQuantity = lotEntity.remainingQuantity - alloc.consumedQuantity))
+            }
+            materialDao.updateMaterial(material.copy(availableQuantity = material.availableQuantity - quantity, updatedAt = now))
+
+            val entity = ProjectMaterialConsumptionEntity(
+                projectId = projectId,
+                materialId = materialId,
+                category = material.category,
+                consumedQuantity = quantity,
+                unit = material.unit,
+                unitCostCents = allocation.averageUnitCostCentsPerThousand,
+                assignedCostCents = allocation.totalCostCents,
+                isAutomatic = false,
+                date = now,
+                createdAt = now
+            )
+            consumptionId = consumptionDao.insertConsumption(entity)
+        }
+
+        val created = ProjectMaterialConsumption(
+            id = consumptionId,
+            projectId = projectId,
+            materialId = materialId,
+            category = material.category,
+            consumedQuantity = quantity,
+            unit = material.unit,
+            unitCostCents = allocation.averageUnitCostCentsPerThousand,
+            assignedCostCents = allocation.totalCostCents,
+            isAutomatic = false,
+            date = DateUtils.getCurrentTimestamp(),
+            createdAt = DateUtils.getCurrentTimestamp()
+        )
+        return Result.success(created)
+    }
+
     override suspend fun addManualConsumption(consumption: ProjectMaterialConsumption): Long {
         return consumptionDao.insertConsumption(ProjectMaterialConsumptionEntity.fromDomain(consumption))
     }

@@ -28,6 +28,11 @@ interface MaterialRepository {
         category: String,
         kitInches: Double
     ): Result<ProjectMaterialConsumption>
+    suspend fun assignSpecificMaterialToProject(
+        projectId: Long,
+        materialId: Long,
+        quantity: Long
+    ): Result<ProjectMaterialConsumption>
     suspend fun addManualConsumption(consumption: ProjectMaterialConsumption): Long
     suspend fun deleteConsumption(consumption: ProjectMaterialConsumption)
 }
