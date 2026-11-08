@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
+import com.example.rebornfinance.core.validation.QuantityParser
 import com.example.rebornfinance.data.local.AppDatabase
 import com.example.rebornfinance.data.local.entity.EyeMaterialEntity
 import com.example.rebornfinance.data.local.entity.EyePurchaseLotEntity
@@ -17,7 +18,6 @@ import com.example.rebornfinance.data.repository.CategoryRepositoryImpl
 import com.example.rebornfinance.data.repository.MovementRepositoryImpl
 import com.example.rebornfinance.domain.model.Category
 import com.example.rebornfinance.domain.model.EyeModality
-import com.example.rebornfinance.domain.model.InventoryCatalog
 import com.example.rebornfinance.domain.model.Movement
 import com.example.rebornfinance.domain.model.MovementType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,13 +34,14 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
     val categories: StateFlow<List<Category>> = categoryRepository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val catalog = InventoryCatalog.categoriesWithSubcategories
-
     var type = MutableStateFlow(MovementType.EXPENSE)
     var amountStr = MutableStateFlow("")
     var description = MutableStateFlow("")
     var category = MutableStateFlow("")
     var subCategory = MutableStateFlow<String?>(null)
+    var quantityStr = MutableStateFlow("1")
+    var selectedUnit = MutableStateFlow("unidades")
+    var registerInInventory = MutableStateFlow(true)
     var dateMillis = MutableStateFlow(DateUtils.getCurrentTimestamp())
     var notes = MutableStateFlow("")
 
@@ -78,6 +79,31 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
             return
         }
 
+        val isExpense = type.value == MovementType.EXPENSE
+        val shouldCreateInventory = isExpense && registerInInventory.value
+
+        if (isEditMode && shouldCreateInventory) {
+            // Protect purchase editing for linked inventory items
+            onError("La edición de compras vinculadas a inventario está restringida para mantener la coherencia de stock.")
+            return
+        }
+
+        var parsedQty: Long = 1000L
+        if (shouldCreateInventory) {
+            val cat = category.value
+            val result = when {
+                cat.equals("Ojos", true) -> QuantityParser.parseInteger(quantityStr.value)
+                cat.equals("Pelo y cabello", true) -> QuantityParser.parseThousandths(quantityStr.value)
+                else -> QuantityParser.parseThousandths(quantityStr.value)
+            }
+
+            if (result.isFailure) {
+                onError(result.exceptionOrNull()?.message ?: "Cantidad inválida.")
+                return
+            }
+            parsedQty = result.getOrNull() ?: 1000L
+        }
+
         viewModelScope.launch {
             val now = DateUtils.getCurrentTimestamp()
             database.withTransaction {
@@ -98,16 +124,17 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                 } else {
                     movementRepository.insertMovement(movement)
 
-                    if (type.value == MovementType.EXPENSE) {
+                    if (shouldCreateInventory) {
                         val cat = category.value
                         val subCat = subCategory.value
+
                         if (cat.equals("Ojos", true)) {
                             val eyeMat = EyeMaterialEntity(
                                 name = description.value.trim(),
-                                color = "Estándar",
-                                type = "Cristal/Acrílico",
+                                color = "",
+                                type = subCat ?: "",
                                 subCategory = subCat,
-                                modality = EyeModality.PAIRS,
+                                modality = if (selectedUnit.value.equals("pares", true)) EyeModality.PAIRS else EyeModality.UNITS,
                                 createdAt = now,
                                 updatedAt = now
                             )
@@ -115,8 +142,8 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                             database.eyePurchaseLotDao().insertLot(
                                 EyePurchaseLotEntity(
                                     eyeMaterialId = eyeId,
-                                    purchasedQuantity = 1L,
-                                    remainingQuantity = 1L,
+                                    purchasedQuantity = parsedQty,
+                                    remainingQuantity = parsedQty,
                                     paidAmountCents = cents,
                                     purchaseDate = dateMillis.value,
                                     createdAt = now
@@ -125,8 +152,8 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                         } else if (cat.equals("Pelo y cabello", true)) {
                             val hairMat = HairMaterialEntity(
                                 name = description.value.trim(),
-                                hairType = "Mohair",
-                                color = "Estándar",
+                                hairType = subCat ?: "",
+                                color = "",
                                 subCategory = subCat,
                                 createdAt = now,
                                 updatedAt = now
@@ -135,22 +162,21 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                             database.hairPurchaseLotDao().insertLot(
                                 HairPurchaseLotEntity(
                                     hairMaterialId = hairId,
-                                    purchasedQuantityGrams = 10000L,
-                                    remainingQuantityGrams = 10000L,
+                                    purchasedQuantityGrams = parsedQty,
+                                    remainingQuantityGrams = parsedQty,
                                     paidAmountCents = cents,
                                     purchaseDate = dateMillis.value,
                                     createdAt = now
                                 )
                             )
                         } else {
-                            // General inventoriable material
                             val mat = MaterialEntity(
                                 name = description.value.trim(),
                                 category = cat,
                                 subCategory = subCat,
-                                unit = "unidades",
-                                totalPurchased = 10000L,
-                                availableQuantity = 10000L,
+                                unit = selectedUnit.value,
+                                totalPurchased = parsedQty,
+                                availableQuantity = parsedQty,
                                 createdAt = now,
                                 updatedAt = now
                             )
@@ -158,8 +184,8 @@ class MovementFormViewModel(application: Application, private val movementId: Lo
                             database.materialPurchaseLotDao().insertLot(
                                 MaterialPurchaseLotEntity(
                                     materialId = matId,
-                                    purchasedQuantity = 10000L,
-                                    remainingQuantity = 10000L,
+                                    purchasedQuantity = parsedQty,
+                                    remainingQuantity = parsedQty,
                                     paidAmountCents = cents,
                                     purchaseDate = dateMillis.value,
                                     createdAt = now

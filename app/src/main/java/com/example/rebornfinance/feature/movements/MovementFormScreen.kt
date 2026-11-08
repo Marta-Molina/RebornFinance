@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +29,9 @@ fun MovementFormScreen(
     val description by viewModel.description.collectAsState()
     val category by viewModel.category.collectAsState()
     val subCategory by viewModel.subCategory.collectAsState()
+    val quantityStr by viewModel.quantityStr.collectAsState()
+    val selectedUnit by viewModel.selectedUnit.collectAsState()
+    val registerInInventory by viewModel.registerInInventory.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
@@ -37,6 +41,7 @@ fun MovementFormScreen(
 
     val filteredCategories = categories.filter { it.type == type }
     val availableSubCategories = InventoryCatalog.categoriesWithSubcategories[category] ?: emptyList()
+    val isExpense = type == MovementType.EXPENSE
 
     Scaffold(
         topBar = {
@@ -104,7 +109,7 @@ fun MovementFormScreen(
                 value = amountStr,
                 onValueChange = { viewModel.amountStr.value = it },
                 label = { Text("Importe (€)") },
-                placeholder = { Text("Ej: 35,00") },
+                placeholder = { Text("Ej: 12,50") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -116,7 +121,7 @@ fun MovementFormScreen(
                 value = description,
                 onValueChange = { viewModel.description.value = it },
                 label = { Text("Descripción") },
-                placeholder = { Text("Ej: Mohair premium, Ojos cristal...") },
+                placeholder = { Text("Ej: Pelo sintético 2.5g, Envío, Ojos...") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -186,6 +191,49 @@ fun MovementFormScreen(
                             )
                         }
                     }
+                }
+            }
+
+            // Register in Inventory Checkbox for Expenses
+            if (isExpense) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Checkbox(
+                        checked = registerInInventory,
+                        onCheckedChange = { viewModel.registerInInventory.value = it }
+                    )
+                    Text("Registrar compra en inventario (crear lote de stock)")
+                }
+            }
+
+            // Quantity and Unit inputs if registerInInventory is true and expense
+            if (isExpense && registerInInventory) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = quantityStr,
+                        onValueChange = { viewModel.quantityStr.value = it },
+                        label = { Text("Cantidad") },
+                        placeholder = { Text("Ej: 10 o 2,5") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    OutlinedTextField(
+                        value = selectedUnit,
+                        onValueChange = { viewModel.selectedUnit.value = it },
+                        label = { Text("Unidad") },
+                        placeholder = { Text("g, pares, unidades...") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
                 }
             }
 

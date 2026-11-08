@@ -101,7 +101,7 @@ object InventoryCatalog {
             "Cajas",
             "Bolsas",
             "Papel de protección",
-            "Material acolchado y protection",
+            "Material acolchado y protección",
             "Etiquetas",
             "Papelería de envío: tarjetas y flyers",
             "Material decorativo",

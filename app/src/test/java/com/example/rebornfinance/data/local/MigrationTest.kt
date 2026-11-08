@@ -6,8 +6,8 @@ import org.junit.Test
 class MigrationTest {
 
     @Test
-    fun testMigration7to8Exists() {
-        val migration = AppDatabase.MIGRATION_7_8
+    fun testMigration12to13Exists() {
+        val migration = AppDatabase.MIGRATION_12_13
         assertNotNull(migration)
     }
 }
