@@ -1,109 +1,95 @@
 package com.example.rebornfinance.domain.model
 
 object InventoryCatalog {
-    val masterCatalog = mapOf(
+    val masterCatalog: Map<String, List<String>> = mapOf(
         "Kits y esculturas" to listOf(
-            "Kits completos",
-            "Kits de edición limitada",
-            "Kits de edición abierta",
-            "Cabezas",
-            "Brazos",
-            "Piernas",
-            "Extremidades completas",
+            "Edición limitada",
+            "Edición abierta",
+            "Cabezas solamente",
+            "Brazos solamente",
+            "Piernas solamente",
             "Cuerpos de tela",
             "Cuerpos de vinilo",
-            "Cuerpos de silicona",
+            "Belly plates",
             "Otros cuerpos y piezas"
         ),
         "Ojos" to listOf(
             "Ojos de cristal",
-            "Ojos de acrílico",
-            "Ojos de silicona",
+            "Ojos de resina",
+            "Ojos de plástico",
             "Ojos de otros materiales",
-            "Otros artículos y componentes para ojos"
+            "Otros"
         ),
         "Pelo y cabello" to listOf(
             "Mohair",
             "Pelo humano",
-            "Pelo sintético",
+            "Sintético",
             "Alpaca",
             "Otros tipos de pelo",
-            "Pelucas y piezas de pelo preparadas"
+            "Pelucas y piezas preparadas"
         ),
-        "Imprimaciones y preparación de superficies" to listOf(
+        "Imprimaciones y preparación" to listOf(
             "Imprimación para vinilo",
             "Imprimación para silicona",
-            "Preparadores de superficie",
-            "Selladores de preparación",
-            "Otros productos de preparación"
+            "Otros"
         ),
         "Pinturas y pigmentos" to listOf(
-            "Pinturas acrílicas de secado al aire (Air Dry)",
-            "Pinturas específicas para vinilo",
-            "Pinturas específicas para silicona",
-            "Pinturas termosellables",
+            "Acrílicas de secado al aire",
+            "Pinturas para silicona",
+            "Pinturas termosellables o heat-set",
             "Pigmentos en polvo",
-            "Pinturas para detalles",
-            "Otros tipos de pintura y pigmento"
+            "Otras"
         ),
         "Barnices y acabados" to listOf(
-            "Barnices mate",
-            "Barnices satinados",
-            "Barnices brillantes",
-            "Selladores finales",
-            "Otros barnices y acabados"
+            "Mate",
+            "Satinado",
+            "Brillante",
+            "Texturizador",
+            "Otros acabados"
         ),
-        "Rellenos y pesos" to listOf(
+        "Rellenos y materiales internos" to listOf(
             "Guata",
-            "Fibra de relleno",
-            "Cuentas de vidrio",
-            "Granulado de vidrio",
-            "Microesferas",
-            "Discos de acero",
-            "Pellets de plástico",
-            "Otros rellenos y materiales de peso"
+            "Discos de fieltro",
+            "Vidrio triturado",
+            "Microesferas de vidrio",
+            "Microesferas de plástico",
+            "Discos de microacero",
+            "Otros"
         ),
         "Adhesivos y consumibles auxiliares" to listOf(
-            "Pegamentos y adhesivos generales",
-            "Adhesivos para pelo",
-            "Adhesivos para imanes",
-            "Selladores auxiliares",
+            "Adhesivos para pelo y pestañas",
+            "Pegamento para imanes",
             "Disolventes",
-            "Limpiadores",
             "Cintas",
-            "Imanes y componentes auxiliares",
-            "Otros consumibles auxiliares"
+            "Imanes",
+            "Otros"
         ),
         "Herramientas reutilizables" to listOf(
             "Pinceles",
-            "Esponjas reutilizables",
-            "Herramientas de pintura",
-            "Herramientas de montaje",
-            "Alicates y pinzas",
-            "Utensilios de medición",
-            "Otras herramientas reutilizables"
+            "Esponjas",
+            "Otras"
         ),
         "Agujas y accesorios de injerto" to listOf(
-            "Agujas de injerto",
-            "Soportes y mangos para agujas",
+            "Agujas",
+            "Soportes y mangos",
             "Otros accesorios de injerto"
         ),
-        "Ropa y complementos del bebé" to listOf(
+        "Ropa y accesorios de bebé" to listOf(
             "Ropa",
             "Gorros",
             "Calcetines y zapatos",
             "Mantas",
             "Chupetes",
             "Diademas y accesorios",
-            "Otros complementos"
+            "Otros"
         ),
         "Embalaje y envíos" to listOf(
             "Cajas",
             "Bolsas",
-            "Papel de protección",
-            "Material acolchado y protección",
+            "Papel protector",
+            "Relleno protector",
             "Etiquetas",
-            "Papelería de envío: tarjetas y flyers",
+            "Tarjetas y folletos",
             "Material decorativo",
             "Otros materiales de envío"
         ),
@@ -124,4 +110,29 @@ object InventoryCatalog {
         "43G, 1 barba",
         "46G, 6 barbas"
     )
+
+    val validUnitsPerFamily: Map<String, List<String>> = mapOf(
+        "Kits y esculturas" to listOf("unidades"),
+        "Ojos" to listOf("pares", "unidades"),
+        "Pelo y cabello" to listOf("g", "unidades"),
+        "Imprimaciones y preparación" to listOf("ml", "unidades", "botes"),
+        "Pinturas y pigmentos" to listOf("ml", "g", "unidades", "botes"),
+        "Barnices y acabados" to listOf("ml", "unidades", "botes"),
+        "Rellenos y materiales internos" to listOf("g", "kg", "unidades"),
+        "Adhesivos y consumibles auxiliares" to listOf("ml", "unidades", "tubos"),
+        "Herramientas reutilizables" to listOf("unidades"),
+        "Agujas y accesorios de injerto" to listOf("unidades", "paquetes"),
+        "Ropa y accesorios de bebé" to listOf("unidades", "conjuntos"),
+        "Embalaje y envíos" to listOf("unidades", "paquetes", "rollos"),
+        "Otros materiales" to listOf("unidades", "g", "ml")
+    )
+
+    fun getDefaultUnit(family: String): String {
+        return validUnitsPerFamily[family]?.firstOrNull() ?: "unidades"
+    }
+
+    fun isUnitDivisible(unit: String): Boolean {
+        val u = unit.trim().lowercase()
+        return u == "g" || u == "gramos" || u == "kg" || u == "ml" || u == "l" || u == "litros"
+    }
 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.rebornfinance.core.validation.QuantityParser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,7 +148,7 @@ fun InventoryScreen(
                                     Text(text = "Sub: ${mat.subCategory}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = "Stock: ${mat.availableQuantity / 1000.0} ${mat.unit}", fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                                Text(text = "Stock: ${QuantityParser.formatThousandths(mat.availableQuantity)} ${mat.unit}", fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }

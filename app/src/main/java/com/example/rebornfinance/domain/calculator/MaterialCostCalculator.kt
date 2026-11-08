@@ -1,5 +1,6 @@
 package com.example.rebornfinance.domain.calculator
 
+import com.example.rebornfinance.core.validation.QuantityParser
 import com.example.rebornfinance.domain.model.MaterialPurchaseLot
 
 data class LotConsumptionResult(
@@ -21,6 +22,7 @@ object MaterialCostCalculator {
     /**
      * Calculates FIFO allocation of material consumption across available purchase lots.
      * quantities are in thousandths (e.g., 5000 = 5.000 ml).
+     * Uses pure integer arithmetic with half-up rounding in cents.
      */
     fun allocateConsumptionFIFO(
         requestedQuantity: Long,
@@ -42,10 +44,14 @@ object MaterialCostCalculator {
             if (lot.remainingQuantity <= 0L) continue
 
             val consumeFromLot = minOf(remainingToConsume, lot.remainingQuantity)
-            // Calculate cost for consumeFromLot based on lot's original paid amount and purchased quantity
-            // unitCostPerThousand = paidAmountCents / purchasedQuantity
+            // Calculate cost for consumeFromLot using integer arithmetic with standard half-up rounding
             val costForThisConsumption = if (lot.purchasedQuantity > 0L) {
-                Math.round((consumeFromLot.toDouble() * lot.paidAmountCents.toDouble()) / lot.purchasedQuantity.toDouble())
+                if (consumeFromLot == lot.purchasedQuantity) {
+                    lot.paidAmountCents
+                } else {
+                    val numerator = consumeFromLot * lot.paidAmountCents
+                    (numerator + (lot.purchasedQuantity / 2L)) / lot.purchasedQuantity
+                }
             } else {
                 0L
             }
@@ -56,11 +62,13 @@ object MaterialCostCalculator {
         }
 
         if (remainingToConsume > 0L) {
-            return ConsumptionAllocationResult(0L, 0L, emptyList(), false, "Stock insuficiente. Faltan ${remainingToConsume / 1000.0} unidades.")
+            val missingFormatted = QuantityParser.formatThousandths(remainingToConsume)
+            return ConsumptionAllocationResult(0L, 0L, emptyList(), false, "Stock insuficiente. Faltan $missingFormatted unidades.")
         }
 
         val averageUnitCost = if (requestedQuantity > 0L) {
-            Math.round((totalCostCents.toDouble() * 1000.0) / requestedQuantity.toDouble()).toLong()
+            val numerator = totalCostCents * 1000L
+            (numerator + (requestedQuantity / 2L)) / requestedQuantity
         } else {
             0L
         }

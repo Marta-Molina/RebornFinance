@@ -1,5 +1,6 @@
 package com.example.rebornfinance.domain.calculator
 
+import com.example.rebornfinance.core.validation.QuantityParser
 import com.example.rebornfinance.domain.model.EyePurchaseLot
 import com.example.rebornfinance.domain.model.HairPurchaseLot
 
@@ -52,7 +53,12 @@ object EyeAndHairCostCalculator {
 
             val consume = minOf(remaining, lot.remainingQuantity)
             val costForConsume = if (lot.purchasedQuantity > 0L) {
-                Math.round((consume.toDouble() * lot.paidAmountCents.toDouble()) / lot.purchasedQuantity.toDouble())
+                if (consume == lot.purchasedQuantity) {
+                    lot.paidAmountCents
+                } else {
+                    val numerator = consume * lot.paidAmountCents
+                    (numerator + (lot.purchasedQuantity / 2L)) / lot.purchasedQuantity
+                }
             } else {
                 0L
             }
@@ -93,7 +99,12 @@ object EyeAndHairCostCalculator {
 
             val consume = minOf(remaining, lot.remainingQuantityGrams)
             val costForConsume = if (lot.purchasedQuantityGrams > 0L) {
-                Math.round((consume.toDouble() * lot.paidAmountCents.toDouble()) / lot.purchasedQuantityGrams.toDouble())
+                if (consume == lot.purchasedQuantityGrams) {
+                    lot.paidAmountCents
+                } else {
+                    val numerator = consume * lot.paidAmountCents
+                    (numerator + (lot.purchasedQuantityGrams / 2L)) / lot.purchasedQuantityGrams
+                }
             } else {
                 0L
             }
@@ -104,11 +115,13 @@ object EyeAndHairCostCalculator {
         }
 
         if (remaining > 0L) {
-            return HairAllocationResult(0L, 0L, emptyList(), false, "Stock de pelo insuficiente. Faltan ${remaining / 1000.0} gramos.")
+            val missingGrams = QuantityParser.formatThousandths(remaining)
+            return HairAllocationResult(0L, 0L, emptyList(), false, "Stock de pelo insuficiente. Faltan $missingGrams gramos.")
         }
 
         val avgUnitCost = if (requestedQuantityGrams > 0L) {
-            Math.round((totalCost.toDouble() * 1000.0) / requestedQuantityGrams.toDouble()).toLong()
+            val numerator = totalCost * 1000L
+            (numerator + (requestedQuantityGrams / 2L)) / requestedQuantityGrams
         } else {
             0L
         }

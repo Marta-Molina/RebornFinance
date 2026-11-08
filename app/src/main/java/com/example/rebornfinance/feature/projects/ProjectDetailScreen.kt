@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.rebornfinance.core.date.DateUtils
 import com.example.rebornfinance.core.money.MoneyUtils
+import com.example.rebornfinance.core.validation.QuantityParser
 import com.example.rebornfinance.domain.calculator.ProjectCalculator
 import com.example.rebornfinance.domain.model.ProjectCost
 import com.example.rebornfinance.domain.model.ProjectEyeAssignment
@@ -88,17 +89,22 @@ fun ProjectDetailScreen(
                             items(generalMaterials) { mat ->
                                 OutlinedButton(
                                     onClick = {
-                                        val qty = (assignQtyInput.toDoubleOrNull() ?: 1.0) * 1000.0
+                                        val parsed = QuantityParser.parseThousandths(assignQtyInput)
+                                        val qty = parsed.getOrNull()
+                                        if (qty == null) {
+                                            materialActionError = "Cantidad inválida. Introduce un número como 1 o 2,5."
+                                            return@OutlinedButton
+                                        }
                                         viewModel.assignSpecificMaterial(
                                             materialId = mat.id,
-                                            quantity = qty.toLong(),
+                                            quantity = qty,
                                             onSuccess = { showInventoryPopup = false; materialActionError = null },
                                             onError = { err -> materialActionError = err }
                                         )
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("${mat.name} (${mat.category}) - Stock: ${mat.availableQuantity / 1000.0} ${mat.unit}")
+                                    Text("${mat.name} (${mat.category}) - Stock: ${QuantityParser.formatThousandths(mat.availableQuantity)} ${mat.unit}")
                                 }
                             }
                         }
@@ -570,7 +576,7 @@ fun ProjectDetailScreen(
                                 Column {
                                     Text(text = "Material: ${mc.category}", fontWeight = FontWeight.Medium)
                                     Text(
-                                        text = "Consumo: ${mc.consumedQuantity / 1000.0} ${mc.unit} (FIFO)",
+                                        text = "Consumo: ${QuantityParser.formatThousandths(mc.consumedQuantity)} ${mc.unit} (FIFO)",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -662,7 +668,7 @@ fun ProjectDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
-                                        Text(text = "Pelo (${hair.consumedQuantityGrams / 1000.0} g)", fontWeight = FontWeight.Medium)
+                                        Text(text = "Pelo (${QuantityParser.formatThousandths(hair.consumedQuantityGrams)} g)", fontWeight = FontWeight.Medium)
                                     }
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),

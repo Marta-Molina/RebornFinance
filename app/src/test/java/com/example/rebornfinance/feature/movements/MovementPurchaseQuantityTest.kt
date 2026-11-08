@@ -33,4 +33,14 @@ class MovementPurchaseQuantityTest {
         assertTrue(QuantityParser.parseInteger("-1").isFailure)
         assertTrue(QuantityParser.parseInteger("abc").isFailure)
     }
+
+    @Test
+    fun testFormatThousandths() {
+        assertEquals("10", QuantityParser.formatThousandths(10000L))
+        assertEquals("2,5", QuantityParser.formatThousandths(2500L))
+        assertEquals("0,001", QuantityParser.formatThousandths(1L))
+        assertEquals("0,125", QuantityParser.formatThousandths(125L))
+        assertEquals("0", QuantityParser.formatThousandths(0L))
+        assertEquals("-2,5", QuantityParser.formatThousandths(-2500L))
+    }
 }

@@ -100,4 +100,28 @@ object QuantityParser {
 
         return Result.success(value)
     }
+
+    fun formatThousandths(value: Long): String {
+        val isNegative = value < 0L
+        val abs = if (isNegative) -value else value
+        val integerPart = abs / 1000L
+        val fracPart = abs % 1000L
+        val sign = if (isNegative) "-" else ""
+
+        if (fracPart == 0L) {
+            return "$sign$integerPart"
+        }
+
+        val paddedFrac = when {
+            fracPart < 10L -> "00$fracPart"
+            fracPart < 100L -> "0$fracPart"
+            else -> fracPart.toString()
+        }.trimEnd('0')
+
+        return "$sign$integerPart,$paddedFrac"
+    }
+
+    fun formatQuantity(quantity: Long, unit: String): String {
+        return "${formatThousandths(quantity)} $unit"
+    }
 }
