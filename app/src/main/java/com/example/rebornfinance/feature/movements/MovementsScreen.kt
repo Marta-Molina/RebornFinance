@@ -31,6 +31,20 @@ fun MovementsScreen(
     val selectedType by viewModel.selectedTypeFilter.collectAsState()
 
     var movementToDelete by remember { mutableStateOf<Movement?>(null) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
+
+    if (deleteError != null) {
+        AlertDialog(
+            onDismissRequest = { deleteError = null },
+            title = { Text("No se puede eliminar") },
+            text = { Text(deleteError!!) },
+            confirmButton = {
+                TextButton(onClick = { deleteError = null }) {
+                    Text("Aceptar")
+                }
+            }
+        )
+    }
 
     if (movementToDelete != null) {
         AlertDialog(
@@ -39,7 +53,9 @@ fun MovementsScreen(
             text = { Text("¿Estás segura de que deseas eliminar '${movementToDelete?.description}'? Esta acción recalculará el saldo.") },
             confirmButton = {
                 TextButton(onClick = {
-                    movementToDelete?.let { viewModel.deleteMovement(it) }
+                    movementToDelete?.let { mov ->
+                        viewModel.deleteMovement(mov, onError = { err -> deleteError = err })
+                    }
                     movementToDelete = null
                 }) {
                     Text("Eliminar", color = MaterialTheme.colorScheme.error)

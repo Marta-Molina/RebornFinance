@@ -9,6 +9,7 @@ data class HairPurchaseLotEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val hairMaterialId: Long,
+    val movementId: Long? = null,
     val purchasedQuantityGrams: Long,
     val remainingQuantityGrams: Long,
     val paidAmountCents: Long,
@@ -19,6 +20,7 @@ data class HairPurchaseLotEntity(
     fun toDomain(): HairPurchaseLot = HairPurchaseLot(
         id = id,
         hairMaterialId = hairMaterialId,
+        movementId = movementId,
         purchasedQuantityGrams = purchasedQuantityGrams,
         remainingQuantityGrams = remainingQuantityGrams,
         paidAmountCents = paidAmountCents,
@@ -31,6 +33,7 @@ data class HairPurchaseLotEntity(
         fun fromDomain(l: HairPurchaseLot): HairPurchaseLotEntity = HairPurchaseLotEntity(
             id = l.id,
             hairMaterialId = l.hairMaterialId,
+            movementId = l.movementId,
             purchasedQuantityGrams = l.purchasedQuantityGrams,
             remainingQuantityGrams = l.remainingQuantityGrams,
             paidAmountCents = l.paidAmountCents,

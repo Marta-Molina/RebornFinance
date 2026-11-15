@@ -46,3 +46,4 @@ class MoneyUtilsTest {
         assertNull(MoneyUtils.parseAmountToCents("12.345.678,99,00"))
     }
 }
+

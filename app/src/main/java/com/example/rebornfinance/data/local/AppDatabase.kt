@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
         BudgetEntity::class,
         SavingsGoalEntity::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -482,6 +482,47 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE material_purchase_lots ADD COLUMN movementId INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE eye_purchase_lots ADD COLUMN movementId INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE hair_purchase_lots ADD COLUMN movementId INTEGER DEFAULT NULL")
+
+                // Reconcile existing lots where movement notes contain "Lote ID: X" or "Lote de inventario ID: X"
+                try {
+                    db.execSQL("""
+                        UPDATE material_purchase_lots 
+                        SET movementId = (
+                            SELECT m.id FROM movements m 
+                            WHERE m.notes LIKE '%Lote ID: ' || material_purchase_lots.id || '%' 
+                               OR m.notes LIKE '%Lote de inventario ID: ' || material_purchase_lots.id || '%'
+                            LIMIT 1
+                        )
+                    """)
+                    db.execSQL("""
+                        UPDATE eye_purchase_lots 
+                        SET movementId = (
+                            SELECT m.id FROM movements m 
+                            WHERE m.notes LIKE '%Lote ID: ' || eye_purchase_lots.id || '%' 
+                               OR m.notes LIKE '%Lote de ojos ID: ' || eye_purchase_lots.id || '%'
+                            LIMIT 1
+                        )
+                    """)
+                    db.execSQL("""
+                        UPDATE hair_purchase_lots 
+                        SET movementId = (
+                            SELECT m.id FROM movements m 
+                            WHERE m.notes LIKE '%Lote ID: ' || hair_purchase_lots.id || '%' 
+                               OR m.notes LIKE '%Lote de pelo ID: ' || hair_purchase_lots.id || '%'
+                            LIMIT 1
+                        )
+                    """)
+                } catch (e: Exception) {
+                    // Ignore if reconciliation fails on empty database
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -492,7 +533,8 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                         MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
-                        MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13
+                        MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
+                        MIGRATION_13_14
                     )
                     .addCallback(DatabaseCallback())
                     .build()

@@ -16,13 +16,21 @@ import kotlinx.coroutines.launch
 
 class MovementsViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
-    private val movementRepository = MovementRepositoryImpl(database.movementDao())
+    private val movementRepository = MovementRepositoryImpl(
+        database.movementDao(),
+        database,
+        database.materialDao(),
+        database.materialPurchaseLotDao(),
+        database.eyePurchaseLotDao(),
+        database.hairPurchaseLotDao()
+    )
 
     private val allMovements = movementRepository.getAllMovements()
 
     val searchQuery = MutableStateFlow("")
     val selectedTypeFilter = MutableStateFlow<MovementType?>(null)
     val selectedCategoryFilter = MutableStateFlow<String?>(null)
+    val errorMessage = MutableStateFlow<String?>(null)
 
     val filteredMovements: StateFlow<List<Movement>> = combine(
         allMovements,
@@ -55,9 +63,16 @@ class MovementsViewModel(application: Application) : AndroidViewModel(applicatio
         selectedCategoryFilter.value = category
     }
 
-    fun deleteMovement(movement: Movement) {
+    fun deleteMovement(movement: Movement, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
-            movementRepository.deleteMovement(movement)
+            val result = movementRepository.deleteMovementSafely(movement.id)
+            if (result.isFailure) {
+                val msg = result.exceptionOrNull()?.message ?: "Error al eliminar el movimiento."
+                errorMessage.value = msg
+                onError(msg)
+            } else {
+                errorMessage.value = null
+            }
         }
     }
 }

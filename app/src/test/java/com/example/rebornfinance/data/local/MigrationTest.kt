@@ -10,4 +10,10 @@ class MigrationTest {
         val migration = AppDatabase.MIGRATION_12_13
         assertNotNull(migration)
     }
+
+    @Test
+    fun testMigration13to14Exists() {
+        val migration = AppDatabase.MIGRATION_13_14
+        assertNotNull(migration)
+    }
 }

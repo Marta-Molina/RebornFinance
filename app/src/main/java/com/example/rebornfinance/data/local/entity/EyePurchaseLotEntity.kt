@@ -9,6 +9,7 @@ data class EyePurchaseLotEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val eyeMaterialId: Long,
+    val movementId: Long? = null,
     val purchasedQuantity: Long,
     val remainingQuantity: Long,
     val paidAmountCents: Long,
@@ -19,6 +20,7 @@ data class EyePurchaseLotEntity(
     fun toDomain(): EyePurchaseLot = EyePurchaseLot(
         id = id,
         eyeMaterialId = eyeMaterialId,
+        movementId = movementId,
         purchasedQuantity = purchasedQuantity,
         remainingQuantity = remainingQuantity,
         paidAmountCents = paidAmountCents,
@@ -31,6 +33,7 @@ data class EyePurchaseLotEntity(
         fun fromDomain(l: EyePurchaseLot): EyePurchaseLotEntity = EyePurchaseLotEntity(
             id = l.id,
             eyeMaterialId = l.eyeMaterialId,
+            movementId = l.movementId,
             purchasedQuantity = l.purchasedQuantity,
             remainingQuantity = l.remainingQuantity,
             paidAmountCents = l.paidAmountCents,

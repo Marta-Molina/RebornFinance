@@ -9,4 +9,5 @@ interface MovementRepository {
     suspend fun insertMovement(movement: Movement): Long
     suspend fun updateMovement(movement: Movement)
     suspend fun deleteMovement(movement: Movement)
+    suspend fun deleteMovementSafely(movementId: Long): Result<Unit>
 }

@@ -1,6 +1,7 @@
 package com.example.rebornfinance.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -19,9 +20,15 @@ interface EyePurchaseLotDao {
     @Query("SELECT * FROM eye_purchase_lots WHERE eyeMaterialId = :materialId AND remainingQuantity > 0 ORDER BY purchaseDate ASC, createdAt ASC")
     suspend fun getAvailableLotsForEyeMaterial(materialId: Long): List<EyePurchaseLotEntity>
 
+    @Query("SELECT * FROM eye_purchase_lots WHERE movementId = :movementId")
+    suspend fun getLotsByMovementId(movementId: Long): List<EyePurchaseLotEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLot(lot: EyePurchaseLotEntity): Long
 
     @Update
     suspend fun updateLot(lot: EyePurchaseLotEntity)
+
+    @Delete
+    suspend fun deleteLot(lot: EyePurchaseLotEntity)
 }

@@ -9,6 +9,7 @@ data class MaterialPurchaseLotEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val materialId: Long,
+    val movementId: Long? = null,
     val purchasedQuantity: Long,
     val remainingQuantity: Long,
     val paidAmountCents: Long,
@@ -19,6 +20,7 @@ data class MaterialPurchaseLotEntity(
     fun toDomain(): MaterialPurchaseLot = MaterialPurchaseLot(
         id = id,
         materialId = materialId,
+        movementId = movementId,
         purchasedQuantity = purchasedQuantity,
         remainingQuantity = remainingQuantity,
         paidAmountCents = paidAmountCents,
@@ -31,6 +33,7 @@ data class MaterialPurchaseLotEntity(
         fun fromDomain(lot: MaterialPurchaseLot): MaterialPurchaseLotEntity = MaterialPurchaseLotEntity(
             id = lot.id,
             materialId = lot.materialId,
+            movementId = lot.movementId,
             purchasedQuantity = lot.purchasedQuantity,
             remainingQuantity = lot.remainingQuantity,
             paidAmountCents = lot.paidAmountCents,
